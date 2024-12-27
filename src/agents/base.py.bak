@@ -1,0 +1,179 @@
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional, List, Callable
+import asyncio
+import uuid
+from datetime import datetime
+from core.messaging import MessageBus, Message
+from core.config import Config
+import logging
+
+class BaseAgent(ABC):
+    """
+    Base agent class providing core functionality for all Hirule agents.
+    Implements fundamental agent behaviors and communication patterns.
+    """
+    
+    def __init__(self, 
+                 agent_id: Optional[str] = None,
+                 message_bus: Optional[MessageBus] = None,
+                 config: Optional[Config] = None):
+        self.agent_id = agent_id or f"{self.__class__.__name__}-{uuid.uuid4()}"
+        self.message_bus = message_bus or MessageBus()
+        self.config = config or Config()
+        self.state: Dict[str, Any] = {}
+        self.running = False
+        self.logger = logging.getLogger(self.agent_id)
+        self._message_handlers: Dict[str, List[Callable]] = {}
+        self._task_queue: asyncio.Queue = asyncio.Queue()
+        self._periodic_tasks: List[asyncio.Task] = []
+
+    async def start(self):
+        """Initialize and start the agent's operations."""
+        try:
+            self.logger.info(f"Starting agent {self.agent_id}")
+            self.running = True
+            await self.setup()
+            
+            # Start main processing loops
+            self._periodic_tasks.extend([
+                asyncio.create_task(self._process_messages()),
+                asyncio.create_task(self._process_tasks()),
+                asyncio.create_task(self._heartbeat())
+            ])
+            
+            await self.post_start()
+            self.logger.info(f"Agent {self.agent_id} started successfully")
+        except Exception as e:
+            self.logger.error(f"Error starting agent: {str(e)}")
+            await self.stop()
+            raise
+
+    async def stop(self):
+        """Gracefully shut down the agent."""
+        try:
+            self.logger.info(f"Stopping agent {self.agent_id}")
+            self.running = False
+            
+            # Cancel all periodic tasks
+            for task in self._periodic_tasks:
+                task.cancel()
+            
+            await self.cleanup()
+            self.logger.info(f"Agent {self.agent_id} stopped successfully")
+        except Exception as e:
+            self.logger.error(f"Error stopping agent: {str(e)}")
+            raise
+
+    @abstractmethod
+    async def setup(self):
+        """Set up agent-specific resources and configurations."""
+        pass
+
+    @abstractmethod
+    async def cleanup(self):
+        """Clean up agent-specific resources."""
+        pass
+
+    async def post_start(self):
+        """Post-start initialization hook."""
+        pass
+
+    async def _process_messages(self):
+        """Main message processing loop."""
+        while self.running:
+            try:
+                message_queue = await self.message_bus.get_messages(self.agent_id)
+                message = await message_queue.get()
+                
+                # Handle message based on type
+                handlers = self._message_handlers.get(message.message_type, [])
+                for handler in handlers:
+                    try:
+                        await handler(message)
+                    except Exception as e:
+                        self.logger.error(f"Error in message handler: {str(e)}")
+                
+                # Default message processing
+                await self.process_message(message)
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.logger.error(f"Error processing message: {str(e)}")
+                await asyncio.sleep(1)  # Prevent tight error loops
+
+    async def _process_tasks(self):
+        """Process background tasks."""
+        while self.running:
+            try:
+                task = await self._task_queue.get()
+                await task
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.logger.error(f"Error processing task: {str(e)}")
+
+    async def _heartbeat(self):
+        """Send periodic heartbeat messages."""
+        while self.running:
+            try:
+                await self.message_bus.publish(
+                    self.message_bus.create_message(
+                        sender=self.agent_id,
+                        recipient="system",
+                        message_type="heartbeat",
+                        payload={
+                            "status": "alive",
+                            "state": self.get_state_summary(),
+                            "timestamp": datetime.now().timestamp()
+                        }
+                    )
+                )
+                await asyncio.sleep(30)  # Configurable heartbeat interval
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.logger.error(f"Error in heartbeat: {str(e)}")
+
+    def register_handler(self, message_type: str, handler: Callable):
+        """Register a message handler for a specific message type."""
+        if message_type not in self._message_handlers:
+            self._message_handlers[message_type] = []
+        self._message_handlers[message_type].append(handler)
+
+    async def send_message(self, 
+                          recipient: str, 
+                          message_type: str, 
+                          payload: Dict[str, Any],
+                          priority: int = 0):
+        """Send a message to another agent."""
+        message = self.message_bus.create_message(
+            sender=self.agent_id,
+            recipient=recipient,
+            message_type=message_type,
+            payload=payload,
+            priority=priority
+        )
+        await self.message_bus.publish(message)
+
+    @abstractmethod
+    async def process_message(self, message: Message):
+        """Process incoming messages."""
+        pass
+
+    def get_state_summary(self) -> Dict[str, Any]:
+        """Get a summary of the agent's current state."""
+        return {
+            "agent_id": self.agent_id,
+            "type": self.__class__.__name__,
+            "running": self.running,
+            "state": self.state
+        }
+
+    async def schedule_task(self, coro):
+        """Schedule a background task."""
+        await self._task_queue.put(coro)
+
+    def update_state(self, updates: Dict[str, Any]):
+        """Update agent state."""
+        self.state.update(updates)

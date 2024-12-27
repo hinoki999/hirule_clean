@@ -1,0 +1,110 @@
+import asyncio
+import logging
+from datetime import datetime
+from typing import Dict, Any
+import os
+import sys
+
+# Add the src directory to Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_path = os.path.join(current_dir, "src")
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+# Import project modules using correct paths
+from src.agents.task_management import TaskTracker, TaskStatus, TaskPriority
+from agents.capability_module import CapabilityRegistry, Capability
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('task_lifecycle.log')
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+class MockAgent:
+    """Mock agent for testing task assignment"""
+    def __init__(self, agent_id: str, capabilities: list[Capability]):
+        self.agent_id = agent_id
+        self.capabilities = capabilities
+        self.assigned_tasks = []
+
+async def test_task_registration_and_assignment():
+    """Test the complete task lifecycle including registration and assignment"""
+    task_tracker = TaskTracker()
+    capability_registry = CapabilityRegistry()
+    
+    # Create mock agents with different capabilities
+    agents = [
+        MockAgent("agent1", [Capability.DATA_COMPRESSION, Capability.SEMANTIC_ANALYSIS]),
+        MockAgent("agent2", [Capability.MODEL_TRAINING, Capability.DATA_COMPRESSION]),
+        MockAgent("agent3", [Capability.SEMANTIC_ANALYSIS, Capability.MODEL_TRAINING])
+    ]
+    
+    # Register agent capabilities
+    for agent in agents:
+        for capability in agent.capabilities:
+            capability_registry.register_agent_capability(agent.agent_id, capability)
+    
+    try:
+        # Test 1: Basic task creation
+        task1 = task_tracker.create_task(
+            required_capability=Capability.DATA_COMPRESSION.name,
+            priority=TaskPriority.HIGH,
+            payload={"data": "test_data"}
+        )
+        logger.info(f"Created task {task1.task_id} with priority {task1.priority}")
+        assert task1.status == TaskStatus.PENDING
+        
+        # Find capable agents and assign task
+        capable_agents = capability_registry.find_agents_with_capability(Capability.DATA_COMPRESSION)
+        if capable_agents:
+            selected_agent_id = next(iter(capable_agents))
+            await task_tracker.assign_task(task1.task_id, selected_agent_id)
+            logger.info(f"Assigned task {task1.task_id} to agent {selected_agent_id}")
+            assert task1.status == TaskStatus.ASSIGNED
+        
+        # Test 2: Task status updates
+        await task_tracker.update_task_status(task1.task_id, TaskStatus.RUNNING)
+        logger.info(f"Updated task {task1.task_id} status to RUNNING")
+        assert task1.status == TaskStatus.RUNNING
+        
+        await task_tracker.update_task_status(
+            task1.task_id, 
+            TaskStatus.COMPLETED,
+            result={"output": "processed_data"},
+            actual_load=0.8
+        )
+        logger.info(f"Completed task {task1.task_id}")
+        assert task1.status == TaskStatus.COMPLETED
+        
+        # Test 3: Priority-based task creation
+        high_priority_task = task_tracker.create_task(
+            required_capability=Capability.MODEL_TRAINING.name,
+            priority=TaskPriority.HIGH,
+            payload={"model": "urgent_training"}
+        )
+        
+        low_priority_task = task_tracker.create_task(
+            required_capability=Capability.MODEL_TRAINING.name,
+            priority=TaskPriority.LOW,
+            payload={"model": "background_training"}
+        )
+        
+        # Verify priority ordering
+        pending_tasks = await task_tracker.get_pending_tasks(Capability.MODEL_TRAINING.name)
+        assert pending_tasks[0].task_id == high_priority_task.task_id
+        
+        logger.info("All task lifecycle tests completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Error during task lifecycle test: {e}")
+        raise
+
+if __name__ == "__main__":
+    asyncio.run(test_task_registration_and_assignment())
