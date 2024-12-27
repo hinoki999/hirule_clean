@@ -1,0 +1,142 @@
+mport asyncio
+import logging
+from datetime import datetime
+from typing import Dict, Any
+
+from agents.task_management import TaskTracker, TaskStatus, TaskPriority
+from agents.capability import CapabilityRegistry, Capability, CapabilityMetadata
+from core.messaging import MessageBus, Message
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(), logging.FileHandler('task_lifecycle.log')]
+)
+
+logger = logging.getLogger(__name__)
+
+class MockAgent:
+    """Mock agent for testing task assignment"""
+    def __init__(self, agent_id: str, capabilities: list[Capability], message_bus: MessageBus):
+        self.agent_id = agent_id
+        self.capabilities = capabilities
+        self.assigned_tasks = []
+        self.message_bus = message_bus
+        self.message_bus.register_agent(self.agent_id)
+        
+    async def handle_task_assignment(self, message: Message):
+        """Handle task assignment messages."""
+        task_id = message.payload.get('task_id')
+        logger.info(f"Agent {self.agent_id} received task assignment {task_id}")
+        self.assigned_tasks.append(task_id)
+        
+        # Acknowledge task assignment
+        response = self.message_bus.create_message(
+            sender=self.agent_id,
+            recipient=message.sender,
+            message_type='task_ack',
+            payload={'task_id': task_id, 'status': 'accepted'},
+            reply_to=message.id
+        )
+        await self.message_bus.publish(response)
+
+async def test_task_registration_and_assignment():
+    """Test the complete task lifecycle including registration and assignment"""
+    message_bus = MessageBus()
+    task_tracker = TaskTracker()
+    capability_registry = CapabilityRegistry()
+    
+    # Create mock agents with different capabilities
+    agents = [
+        MockAgent("agent1", 
+                 [Capability.DATA_COMPRESSION, Capability.SEMANTIC_ANALYSIS],
+                 message_bus),
+        MockAgent("agent2", 
+                 [Capability.MODEL_TRAINING, Capability.DATA_COMPRESSION],
+                 message_bus),
+        MockAgent("agent3", 
+                 [Capability.SEMANTIC_ANALYSIS, Capability.MODEL_TRAINING],
+                 message_bus)
+    ]
+    
+    # Register agent capabilities
+    for agent in agents:
+        for capability in agent.capabilities:
+            capability_registry.register_agent_capability(agent.agent_id, capability)
+        
+        # Subscribe to task assignments
+        message_bus.subscribe('task_assignment', agent.handle_task_assignment)
+    
+    try:
+        # Test 1: Basic task creation and assignment
+        task1 = task_tracker.create_task(
+            required_capability=Capability.DATA_COMPRESSION.name,
+            priority=TaskPriority.HIGH,
+            payload={"data": "test_data"}
+        )
+        logger.info(f"Created task {task1.task_id} with priority {task1.priority}")
+        assert task1.status == TaskStatus.PENDING
+        
+        # Find capable agents and assign task
+        capable_agents = capability_registry.find_agents_with_capability(Capability.DATA_COMPRESSION)
+        if capable_agents:
+            selected_agent_id = next(iter(capable_agents))
+            
+            # Notify agent through message bus
+            assignment_msg = message_bus.create_message(
+                sender='task_tracker',
+                recipient=selected_agent_id,
+                message_type='task_assignment',
+                payload={'task_id': task1.task_id}
+            )
+            await message_bus.publish(assignment_msg)
+            
+            # Assign task in tracker
+            await task_tracker.assign_task(task1.task_id, selected_agent_id)
+            logger.info(f"Assigned task {task1.task_id} to agent {selected_agent_id}")
+            assert task1.status == TaskStatus.ASSIGNED
+        
+        # Test 2: Task status updates
+        await task_tracker.update_task_status(task1.task_id, TaskStatus.RUNNING)
+        logger.info(f"Updated task {task1.task_id} status to RUNNING")
+        assert task1.status == TaskStatus.RUNNING
+        
+        await task_tracker.update_task_status(
+            task1.task_id, 
+            TaskStatus.COMPLETED, 
+            result={"output": "processed_data"},
+            actual_load=0.8
+        )
+        logger.info(f"Completed task {task1.task_id}")
+        assert task1.status == TaskStatus.COMPLETED
+        
+        # Test 3: Priority-based task creation
+        high_priority_task = task_tracker.create_task(
+            required_capability=Capability.MODEL_TRAINING.name,
+            priority=TaskPriority.HIGH,
+            payload={"model": "urgent_training"}
+        )
+        
+        low_priority_task = task_tracker.create_task(
+            required_capability=Capability.MODEL_TRAINING.name,
+            priority=TaskPriority.LOW,
+            payload={"model": "background_training"}
+        )
+        
+        # Verify priority ordering
+        pending_tasks = await task_tracker.get_pending_tasks(Capability.MODEL_TRAINING.name)
+        assert pending_tasks[0].task_id == high_priority_task.task_id
+        
+        logger.info("All task lifecycle tests completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Error during task lifecycle test: {e}")
+        raise
+    finally:
+        # Cleanup
+        for agent in agents:
+            message_bus.unregister_agent(agent.agent_id)
+
+if __name__ == "__main__":
+    asyncio.run(test_task_registration_and_assignment())

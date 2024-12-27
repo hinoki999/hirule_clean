@@ -1,0 +1,12 @@
+2024-12-22 10:31:17,889 - harness_master_coordinator - INFO - Event recorded: {'type': 'agent_registration', 'agent_id': 'test_agent_1', 'success': True, 'timestamp': 242289.5}
+2024-12-22 10:31:17,914 - harness_master_coordinator - INFO - Event recorded: {'type': 'duplicate_registration_attempt', 'agent_id': 'test_agent_2', 'first_attempt': True, 'second_attempt': False, 'timestamp': 242289.531}
+2024-12-22 10:31:17,914 - harness_master_coordinator - INFO - Event recorded: {'type': 'duplicate_registration_attempt', 'agent_id': 'test_agent_2', 'first_attempt': True, 'second_attempt': False, 'timestamp': 242289.531}
+2024-12-22 10:31:17,931 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_0', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,931 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_0', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,931 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_0', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,931 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_1', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,931 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_1', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,931 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_1', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,937 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_2', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,937 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_2', 'success': True, 'timestamp': 242289.546}
+2024-12-22 10:31:17,937 - harness_master_coordinator - INFO - Event recorded: {'type': 'multi_agent_registration', 'agent_id': 'test_agent_2', 'success': True, 'timestamp': 242289.546}

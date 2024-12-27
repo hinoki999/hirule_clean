@@ -1,0 +1,4 @@
+2024-12-19 21:29:10,200 - asyncio - DEBUG - Using proactor: IocpProactor
+2024-12-19 21:29:10,216 - root - INFO - Agent agent_1 is alive.
+2024-12-19 21:29:10,217 - root - INFO - Agent agent_2 is alive.
+2024-12-19 21:29:10,217 - root - INFO - Agent agent_3 is alive.

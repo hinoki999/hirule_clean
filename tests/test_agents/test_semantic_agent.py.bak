@@ -1,0 +1,12 @@
+import pytest
+from src.agents.semantic_agent import SemanticAgent
+
+def test_semantic_agent_creation():
+    """Test that we can create a semantic agent"""
+    agent = SemanticAgent()
+    assert isinstance(agent, SemanticAgent)
+
+def test_semantic_agent_attributes():
+    """Test that semantic agent has expected attributes"""
+    agent = SemanticAgent()
+    assert hasattr(agent, 'process_task')

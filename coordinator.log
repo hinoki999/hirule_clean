@@ -1,0 +1,29 @@
+Manual test log entry.
+2024-12-19 20:49:33,560 - asyncio - DEBUG - Using proactor: IocpProactor
+2024-12-19 20:49:33,560 - __main__ - INFO - Setting up MasterCoordinator.
+2024-12-19 20:49:33,560 - CommunicationProtocol - INFO - Registering handler for message type ProtocolMessageType.REGISTER
+2024-12-19 20:49:33,560 - CommunicationProtocol - INFO - Registering handler for message type ProtocolMessageType.TASK_REQUEST
+2024-12-19 20:49:33,560 - CommunicationProtocol - INFO - Registering handler for message type ProtocolMessageType.LOAD_REPORT
+2024-12-19 20:49:33,560 - __main__ - INFO - Scheduled task: process_pending_tasks
+2024-12-19 21:06:00,935 - __main__ - WARNING - Task process_pending_tasks was cancelled.
+2024-12-19 21:06:00,935 - __main__ - INFO - Scheduled task: monitor_system_health
+2024-12-19 21:06:04,300 - __main__ - WARNING - Task monitor_system_health was cancelled.
+2024-12-19 21:06:04,300 - __main__ - INFO - Scheduled task: clean_cache
+2024-12-19 21:06:05,924 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-4' coro=<MasterCoordinator.clean_cache() running at C:\Users\Alber\hirule\src\agents\coordinator.py:134> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+2024-12-19 21:06:05,924 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task cancelling name='Task-1' coro=<MasterCoordinator.setup() done, defined at C:\Users\Alber\hirule\src\agents\coordinator.py:57> wait_for=<Task pending name='Task-4' coro=<MasterCoordinator.clean_cache() running at C:\Users\Alber\hirule\src\agents\coordinator.py:134> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]> cb=[gather.<locals>._done_callback() at C:\Python312\Lib\asyncio\tasks.py:767]>
+2024-12-19 21:06:15,048 - asyncio - DEBUG - Using proactor: IocpProactor
+2024-12-19 21:06:15,052 - __main__ - INFO - Setting up MasterCoordinator.
+2024-12-19 21:06:15,052 - CommunicationProtocol - INFO - Registering handler for message type ProtocolMessageType.REGISTER
+2024-12-19 21:06:15,052 - CommunicationProtocol - INFO - Registering handler for message type ProtocolMessageType.TASK_REQUEST
+2024-12-19 21:06:15,052 - CommunicationProtocol - INFO - Registering handler for message type ProtocolMessageType.LOAD_REPORT
+2024-12-19 21:06:15,052 - __main__ - INFO - Scheduled task: process_pending_tasks
+2024-12-19 21:23:20,119 - __main__ - WARNING - Task process_pending_tasks was cancelled.
+2024-12-19 21:23:20,119 - __main__ - INFO - Scheduled task: monitor_system_health
+2024-12-19 21:23:24,600 - __main__ - WARNING - Task monitor_system_health was cancelled.
+2024-12-19 21:23:24,600 - __main__ - INFO - Scheduled task: clean_cache
+2024-12-19 21:23:30,260 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='Task-4' coro=<MasterCoordinator.clean_cache() running at C:\Users\Alber\hirule\src\agents\coordinator.py:134> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]>
+2024-12-19 21:23:30,260 - asyncio - ERROR - Task was destroyed but it is pending!
+task: <Task cancelling name='Task-1' coro=<MasterCoordinator.setup() done, defined at C:\Users\Alber\hirule\src\agents\coordinator.py:57> wait_for=<Task pending name='Task-4' coro=<MasterCoordinator.clean_cache() running at C:\Users\Alber\hirule\src\agents\coordinator.py:134> wait_for=<Future pending cb=[Task.task_wakeup()]> cb=[Task.task_wakeup()]> cb=[gather.<locals>._done_callback() at C:\Python312\Lib\asyncio\tasks.py:767]>

@@ -1,0 +1,24 @@
+2024-12-20 08:14:48,700 - asyncio - DEBUG - Using proactor: IocpProactor
+2024-12-20 08:14:48,701 - CapabilityRegistry - INFO - Registered capability DATA_COMPRESSION for agent agent1
+2024-12-20 08:14:48,701 - CapabilityRegistry - INFO - Registered capability SEMANTIC_ANALYSIS for agent agent1
+2024-12-20 08:14:48,701 - CapabilityRegistry - INFO - Registered capability MODEL_TRAINING for agent agent2
+2024-12-20 08:14:48,702 - CapabilityRegistry - INFO - Registered capability DATA_COMPRESSION for agent agent2
+2024-12-20 08:14:48,702 - CapabilityRegistry - INFO - Registered capability SEMANTIC_ANALYSIS for agent agent3
+2024-12-20 08:14:48,704 - CapabilityRegistry - INFO - Registered capability MODEL_TRAINING for agent agent3
+2024-12-20 08:14:48,705 - __main__ - INFO - Agent agent1 started
+2024-12-20 08:14:48,705 - __main__ - INFO - Agent agent1 processing task 73362025-bfab-46d7-9d53-7b9c867f0d4f
+2024-12-20 08:14:48,706 - __main__ - INFO - Agent agent2 started
+2024-12-20 08:14:48,706 - __main__ - INFO - Agent agent2 processing task 11c25eed-ebfb-48ec-9628-aede33331991
+2024-12-20 08:14:48,706 - __main__ - INFO - Agent agent3 started
+2024-12-20 08:14:48,706 - __main__ - INFO - Agent agent3 processing task 4ed4bd3f-242e-4299-b5ce-c6a85c8552bc
+2024-12-20 08:14:49,709 - __main__ - INFO - Agent agent1 completed task 73362025-bfab-46d7-9d53-7b9c867f0d4f
+2024-12-20 08:14:49,710 - __main__ - INFO - Agent agent2 completed task 11c25eed-ebfb-48ec-9628-aede33331991
+2024-12-20 08:14:49,711 - __main__ - INFO - Agent agent3 completed task 4ed4bd3f-242e-4299-b5ce-c6a85c8552bc
+2024-12-20 08:14:49,813 - __main__ - INFO - Agent agent1 processing task c6ed0d76-20d4-41fe-8df1-52c30b29f7e3
+2024-12-20 08:14:49,814 - __main__ - INFO - Agent agent2 processing task d5c6a1b7-2580-4815-9d98-f1a07f81d971
+2024-12-20 08:14:50,809 - __main__ - INFO - Agent agent1 completed task c6ed0d76-20d4-41fe-8df1-52c30b29f7e3
+2024-12-20 08:14:50,810 - __main__ - INFO - Agent agent2 completed task d5c6a1b7-2580-4815-9d98-f1a07f81d971
+2024-12-20 08:14:53,693 - __main__ - INFO - All tasks completed successfully
+2024-12-20 08:14:53,694 - __main__ - INFO - Agent agent1 stopped
+2024-12-20 08:14:53,695 - __main__ - INFO - Agent agent2 stopped
+2024-12-20 08:14:53,695 - __main__ - INFO - Agent agent3 stopped

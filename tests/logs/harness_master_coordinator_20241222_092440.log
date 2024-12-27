@@ -1,0 +1,1 @@
+2024-12-22 09:24:40,748 - harness_master_coordinator - INFO - Event recorded: {'type': 'initialization_check', 'status': {'status': 'RUNNING', 'registered_agents': 0, 'pending_tasks': 0, 'last_health_check': 238292.359}, 'timestamp': 238292.359}

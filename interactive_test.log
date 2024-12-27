@@ -1,0 +1,5 @@
+2024-12-19 20:58:07,788 - root - INFO - Task task_123 registered with priority HIGH.
+2024-12-19 20:58:34,650 - root - DEBUG - Debugging test
+2024-12-19 20:58:34,684 - root - INFO - Informational test
+2024-12-19 20:58:34,687 - root - WARNING - Warning test
+2024-12-19 20:58:34,694 - root - ERROR - Error test
