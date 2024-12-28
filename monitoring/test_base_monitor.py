@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from .base_monitor import BaseMonitor, MetricType, MetricDefinition
 
 class TestMonitor(BaseMonitor):
@@ -108,26 +108,25 @@ async def test_system_metrics_collection(test_monitor):
     assert "system.network.bytes_sent" in metrics
     assert "system.network.bytes_recv" in metrics
 
+
 @pytest.mark.asyncio
 async def test_threshold_monitoring(test_monitor, mock_alert_manager):
     """Test threshold monitoring and alerting"""
-    # Set up the alert manager
+    from unittest.mock import AsyncMock
+    
+    # Configure mock - ONLY DO THIS ONCE
+    mock_alert_manager.create_alert = AsyncMock()
     test_monitor.alert_manager = mock_alert_manager
-    
-    # Configure mock
-    mock_alert_manager.create_alert = Mock()
-    mock_alert_manager.create_alert.return_value = None
-    
+
     # Register metric with threshold
     test_monitor.register_metric(
         name="test.metric",
         metric_type=MetricType.GAUGE,
         description="Test metric",
         unit="count",
-        thresholds={"HIGH": 50}  # Threshold is 50, we'll send 100
+        thresholds={"HIGH": 50}
     )
-    
-    # Process metrics that should trigger the alert
+
     await test_monitor.process_metrics({"test.metric": 100})
     
     # Give a small delay for async operations
@@ -206,7 +205,7 @@ async def test_metric_statistics(test_monitor):
         await test_monitor.process_metrics({"test.stats": value})
     
     # Get statistics - changed to await if get_metric_statistics is async
-    stats = await test_monitor.get_metric_statistics("test.stats")
+    stats = test_monitor.get_metric_statistics("test.stats")
     
     assert stats["count"] == 5
     assert stats["min"] == 10
@@ -220,6 +219,7 @@ async def test_metric_statistics(test_monitor):
 async def test_error_handling(test_monitor, mock_alert_manager):
     """Test error handling during metric collection"""
     test_monitor.alert_manager = mock_alert_manager
+    mock_alert_manager.create_alert = AsyncMock()  # Use AsyncMock here
     
     # Simulate an error during collection
     error = Exception("Test error")
@@ -259,12 +259,22 @@ async def test_monitoring_status(test_monitor):
 @pytest.mark.asyncio
 async def test_metric_validation(test_monitor):
     """Test metric validation logic"""
-    # Test invalid metric registration
+    # Test invalid metric registration with empty name
+    with pytest.raises(ValueError, match="Metric name must be a non-empty string"):
+        test_monitor.register_metric(
+            name="",  # Empty name should raise ValueError
+            metric_type=MetricType.GAUGE,
+            description="Test metric",
+            unit="count",
+            thresholds={}
+        )
+
+    # Test invalid metric type
     with pytest.raises(ValueError):
         test_monitor.register_metric(
-            name="invalid.metric",
-            metric_type="INVALID_TYPE",
-            description="Invalid metric",
+            name="test.metric",
+            metric_type="invalid_type",  # Invalid type should raise ValueError
+            description="Test metric",
             unit="count",
             thresholds={}
         )
