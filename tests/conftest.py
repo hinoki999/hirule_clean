@@ -1,21 +1,19 @@
-# tests/conftest.py
 import pytest
+import pytest_asyncio
+import aiohttp
 import asyncio
-import logging
+from unittest.mock import AsyncMock
 
-# Configure logging for tests
-def pytest_configure(config):
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
-    # Set asyncio default loop scope
-    config.option.asyncio_default_fixture_loop_scope = "function"
+@pytest_asyncio.fixture
+async def mock_session():
+    """Creates a mock aiohttp ClientSession for testing"""
+    session = AsyncMock(spec=aiohttp.ClientSession)
+    session.closed = False
+    session.close = AsyncMock()
+    return session
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_env():
-    """Setup test environment"""
-    # Add any global test setup here
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup_sessions():
+    """Cleanup any pending tasks after tests"""
     yield
-    # Add any global cleanup here
+    await asyncio.sleep(0)  # Allow any pending tasks to complete

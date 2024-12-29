@@ -1,0 +1,130 @@
+from src.agents.base import BaseAgent, AgentCapability
+from src.core.messaging import Message
+from src.validation.lead_validator import LeadValidator, ValidationResult
+from src.metrics.collector import MetricsCollector
+from src.enrichment.service import EnrichmentService
+from datetime import datetime, timedelta
+from enum import Enum
+import logging
+import json
+
+class LeadEnrichmentAgent(BaseAgent):
+    def __init__(self, agent_id=None, message_bus=None, config=None):
+        self.agent_type = "lead_enrichment"
+        capabilities = [AgentCapability.BASE]
+        super().__init__(agent_id=agent_id, message_bus=message_bus, config=config, capabilities=capabilities)
+        self._processed_leads = {}
+        self.logger = logging.getLogger(__name__)
+        self.validator = LeadValidator()
+        self.metrics = MetricsCollector(window_size=timedelta(hours=1))
+        self.enrichment_service = EnrichmentService()
+    
+    async def setup(self):
+        """Implementation of abstract setup method"""
+        self.logger.info(f"Setting up {self.agent_type} agent")
+        return True
+        
+    async def cleanup(self):
+        """Implementation of abstract cleanup method"""
+        self.logger.info(f"Cleaning up {self.agent_type} agent")
+        return True
+
+    async def process_message(self, message: Message):
+        """Implementation of abstract process_message method"""
+        if message.message_type == "ENRICH_LEAD":
+            return await self.enrich_lead(message.payload)
+        elif message.message_type == "GET_METRICS":
+            return self.get_metrics()
+        return None
+    
+    def get_metrics(self) -> dict:
+        """Get current metrics"""
+        return {
+            "metrics": self.metrics.get_current_metrics(),
+            "error_distribution": self.metrics.get_error_distribution()
+        }
+        
+    def _format_validation_result(self, validation_result: ValidationResult) -> dict:
+        """Format validation results for logging and response"""
+        return {
+            "validation_status": "valid" if validation_result.is_valid else "invalid",
+            "errors": validation_result.errors,
+            "warnings": validation_result.warnings,
+            "info": validation_result.info
+        }
+        
+    async def enrich_lead(self, lead_data: dict) -> dict:
+        """Enrich lead data with validation and external enrichment."""
+        lead_id = f"lead_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}"
+        metric = self.metrics.start_processing()
+        
+        try:
+            # Validate the lead data
+            validation_result = self.validator.validate_lead(lead_data)
+            
+            enriched_data = {
+                "lead_id": lead_id,
+                "original_data": lead_data,
+                "processed_at": datetime.now().isoformat(),
+                "validation_details": self._format_validation_result(validation_result),
+                "enrichment_status": "pending"
+            }
+            
+            if not validation_result.is_valid:
+                error_msg = "Validation failed"
+                self.logger.error(f"Lead validation failed: {json.dumps(enriched_data['validation_details'])}")
+                enriched_data.update({
+                    "enrichment_status": "failed",
+                    "error": error_msg
+                })
+                metric.complete(
+                    success=False,
+                    validation_status="invalid",
+                    error_type="validation_error",
+                    warning_count=len(validation_result.warnings)
+                )
+                return enriched_data
+            
+            # Perform external enrichment
+            try:
+                enrichment_results = await self.enrichment_service.enrich_lead(lead_data)
+                enriched_data.update({
+                    "enrichment_status": "completed",
+                    "enrichment_data": enrichment_results
+                })
+            except Exception as e:
+                self.logger.error(f"Enrichment failed for lead {lead_id}: {str(e)}")
+                enriched_data.update({
+                    "enrichment_status": "partial",
+                    "enrichment_error": str(e)
+                })
+            
+            # Store processed lead
+            self._processed_leads[lead_id] = enriched_data
+            self.logger.info(f"Successfully processed lead {lead_id}")
+            
+            metric.complete(
+                success=True,
+                validation_status="valid",
+                warning_count=len(validation_result.warnings)
+            )
+            
+        except Exception as e:
+            error_msg = str(e)
+            self.logger.error(f"Failed to process lead: {error_msg}")
+            enriched_data = {
+                "lead_id": lead_id,
+                "original_data": lead_data,
+                "processed_at": datetime.now().isoformat(),
+                "enrichment_status": "failed",
+                "error": error_msg
+            }
+            
+            metric.complete(
+                success=False,
+                validation_status="error",
+                error_type="processing_error",
+                warning_count=0
+            )
+            
+        return enriched_data
