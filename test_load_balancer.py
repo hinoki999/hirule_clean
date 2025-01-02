@@ -11,7 +11,7 @@ from agents.load_balancer import LoadBalancer, AgentStatus
 
 async def test_load_balancer():
     # Setup logging
-    logging.basicConfig(level=logging.INFO, 
+    logging.basicConfig(level=logging.INFO,
                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger('main')
 
@@ -43,13 +43,13 @@ async def test_load_balancer():
         if agent_id:
             logger.info(f"Assigning task {i+1} to {agent_id}")
             lb.task_started(agent_id)
-            
+
             # Simulate task processing
             await asyncio.sleep(0.1)  # Simulate some work
-            
+
             # Complete task
             lb.task_completed(agent_id, processing_time)
-            
+
             # Log current system load
             system_load = lb.get_system_load()
             logger.info(f"Current system load: {system_load}")
@@ -62,3 +62,5 @@ async def test_load_balancer():
 
 if __name__ == "__main__":
     asyncio.run(test_load_balancer())
+
+

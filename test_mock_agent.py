@@ -54,17 +54,17 @@ logging.basicConfig(
 )
 
 class MockAgent:
-    """Mock agent for testing the MasterCoordinator."""
+    #"""Mock agent for testing the MasterCoordinator.#"""
     def __init__(self, agent_id, capabilities):
         self.agent_id = agent_id
         self.capabilities = capabilities
 
     async def heartbeat(self):
-        """Simulate sending a heartbeat signal."""
+        #"""Simulate sending a heartbeat signal.#"""
         logging.info(f"Agent {self.agent_id} is alive.")
 
 async def simulate_agents():
-    """Simulate mock agents and their interactions."""
+    #"""Simulate mock agents and their interactions.#"""
     agents = [
         MockAgent("agent_1", ["capability_1"]),
         MockAgent("agent_2", ["capability_2"]),
@@ -76,3 +76,5 @@ async def simulate_agents():
 
 if __name__ == "__main__":
     asyncio.run(simulate_agents())
+
+

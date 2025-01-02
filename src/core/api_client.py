@@ -10,12 +10,12 @@ class APIClient:
         self.base_url = "https://api.openai.com/v1"
 
     def set_api_key(self, api_key=None):
-        """Override API key if provided, otherwise use from .env"""
+        ###"""Override API key if provided, otherwise use from .env###"""
         if api_key:
             self.api_key = api_key
 
     async def search(self, query, max_results=10):
-        """Perform an OpenAI API call"""
+        ###"""Perform an OpenAI API call###"""
         if self.is_test_mode:
             return {
                 "results": [
@@ -25,12 +25,12 @@ class APIClient:
                 "total": 2,
                 "query": query
             }
-        
+
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-        
+
         # Using GPT-3.5-turbo for the API call
         data = {
             "model": "gpt-3.5-turbo",
@@ -39,7 +39,7 @@ class APIClient:
                 {"role": "user", "content": query}
             ]
         }
-        
+
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"{self.base_url}/chat/completions",
@@ -60,3 +60,5 @@ class APIClient:
                 else:
                     error_text = await response.text()
                     raise Exception(f"API call failed with status {response.status}: {error_text}")
+
+

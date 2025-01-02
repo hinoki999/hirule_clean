@@ -25,29 +25,31 @@ logging.basicConfig(
 )
 
 async def test_task_registration():
-    """Simulates task registration and logs the lifecycle."""
+    #"""Simulates task registration and logs the lifecycle.#"""
     try:
         # Create TaskTracker instance directly for testing
         task_tracker = TaskTracker()
-        
+
         # Create a test task
         task = task_tracker.create_task(
             required_capability="test_capability",
             priority=TaskPriority.HIGH,
             payload={"description": "Test task"}
         )
-        
+
         logging.info(f"Task {task.task_id} created with priority {task.priority}.")
-        
+
         # Update task status
         await task_tracker.update_task_status(task.task_id, TaskStatus.COMPLETED)
         logging.info(f"Task {task.task_id} marked as completed.")
-        
+
         logging.info("Task lifecycle tested successfully.")
-        
+
     except Exception as e:
         logging.error(f"Error during task lifecycle test: {e}")
         raise
 
 if __name__ == "__main__":
     asyncio.run(test_task_registration())
+
+

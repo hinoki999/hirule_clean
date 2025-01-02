@@ -1,0 +1,16 @@
+﻿from typing import Dict, Optional, List
+import numpy as np
+from decimal import Decimal
+from ..strategies.base_nlt_strategy import BaseNLTStrategy  # Currently inherits from base
+
+# Our current pattern:
+class NLTMomentumStrategy(BaseNLTStrategy):
+    def __init__(self, agent, lookback_period: int = 20):
+        super().__init__(agent)  # Basic agent initialization
+        self.lookback_period = lookback_period
+        self.price_history: Dict[str, List[float]] = {}
+
+    async def analyze_market(self, symbol: str, market_data: Dict) -> Optional[Dict]:
+        # Direct method calls without message bus
+        price = float(market_data.get("last_price", 0))
+        volume = float(market_data.get("volume", 0))

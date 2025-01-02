@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, Mock, patch
 from .base_monitor import BaseMonitor, MetricType, MetricDefinition
 
 class TestMonitor(BaseMonitor):
-    """Test implementation of BaseMonitor for testing"""
+    #"""Test implementation of BaseMonitor for testing#"""
     def __init__(self):
         super().__init__()
         self.metrics = {}
@@ -14,29 +14,29 @@ class TestMonitor(BaseMonitor):
         self._is_monitoring = False
 
     async def collect_metrics(self):
-        """Test implementation of metric collection"""
+        #"""Test implementation of metric collection#"""
         return {
             "test.metric": 100,
             "test.counter": 1
         }
 
     async def check_health(self):
-        """Test implementation of health check"""
+        #"""Test implementation of health check#"""
         return True
 
     async def initialize(self):
-        """Initialize the test monitor"""
+        #"""Initialize the test monitor#"""
         self._is_monitoring = False
         self.metrics = {}
 
     async def cleanup(self):
-        """Cleanup resources"""
+        #"""Cleanup resources#"""
         self._is_monitoring = False
         self.metrics = {}
 
 @pytest_asyncio.fixture
 async def test_monitor():
-    """Fixture to provide a test monitor instance"""
+    #"""Fixture to provide a test monitor instance#"""
     monitor = TestMonitor()
     await monitor.initialize()
     try:
@@ -46,12 +46,12 @@ async def test_monitor():
 
 @pytest.fixture
 def mock_alert_manager():
-    """Fixture to provide a mock alert manager"""
+    #"""Fixture to provide a mock alert manager#"""
     return Mock()
 
 @pytest.mark.asyncio
 async def test_metric_registration(test_monitor):
-    """Test metric registration functionality"""
+    #"""Test metric registration functionality#"""
     # Register a test metric (removed await since it's not async)
     test_monitor.register_metric(
         name="test.metric",
@@ -60,7 +60,7 @@ async def test_metric_registration(test_monitor):
         unit="count",
         thresholds={"HIGH": 150}
     )
-    
+
     assert "test.metric" in test_monitor.metric_definitions
     metric_def = test_monitor.metric_definitions["test.metric"]
     assert metric_def.type == MetricType.GAUGE
@@ -69,21 +69,21 @@ async def test_metric_registration(test_monitor):
 
 @pytest.mark.asyncio
 async def test_metric_collection(test_monitor):
-    """Test basic metric collection"""
+    #"""Test basic metric collection#"""
     collected = False
-    
+
     async def callback(metrics, health):
         nonlocal collected
         collected = True
         assert "test.metric" in metrics
         assert metrics["test.metric"] == 100
         assert health is True
-    
+
     # Start monitoring without timeout
     monitoring_task = asyncio.create_task(
         test_monitor.start_monitoring(callback)
     )
-    
+
     try:
         # Give it time to run one collection cycle
         await asyncio.sleep(0.2)
@@ -94,13 +94,13 @@ async def test_metric_collection(test_monitor):
 
 @pytest.mark.asyncio
 async def test_system_metrics_collection(test_monitor):
-    """Test system metrics collection"""
+    #"""Test system metrics collection#"""
     # Removed await since these aren't async methods
     test_monitor.enable_system_metrics()
     test_monitor.register_system_metrics()
-    
+
     metrics = await test_monitor.collect_system_metrics()
-    
+
     # Verify essential system metrics are present
     assert "system.cpu.percent" in metrics
     assert "system.memory.percent" in metrics
@@ -111,9 +111,9 @@ async def test_system_metrics_collection(test_monitor):
 
 @pytest.mark.asyncio
 async def test_threshold_monitoring(test_monitor, mock_alert_manager):
-    """Test threshold monitoring and alerting"""
+    #"""Test threshold monitoring and alerting#"""
     from unittest.mock import AsyncMock
-    
+
     # Configure mock - ONLY DO THIS ONCE
     mock_alert_manager.create_alert = AsyncMock()
     test_monitor.alert_manager = mock_alert_manager
@@ -128,13 +128,13 @@ async def test_threshold_monitoring(test_monitor, mock_alert_manager):
     )
 
     await test_monitor.process_metrics({"test.metric": 100})
-    
+
     # Give a small delay for async operations
     await asyncio.sleep(0.1)
-    
+
     # Verify alert was created
     mock_alert_manager.create_alert.assert_called_once()
-    
+
     # Check alert details
     call_args = mock_alert_manager.create_alert.call_args[1]
     assert call_args["severity"] == "HIGH"
@@ -143,7 +143,7 @@ async def test_threshold_monitoring(test_monitor, mock_alert_manager):
 
 @pytest.mark.asyncio
 async def test_metric_history(test_monitor):
-    """Test metric history storage and retrieval"""
+    #"""Test metric history storage and retrieval#"""
     # Register the metric first
     test_monitor.register_metric(
         name="test.metric",
@@ -152,22 +152,22 @@ async def test_metric_history(test_monitor):
         unit="count",
         thresholds={}
     )
-    
+
     # Process some test metrics
     for _ in range(3):
         await test_monitor.process_metrics({"test.metric": 100})
         await asyncio.sleep(0.1)
-    
+
     # Get metric history
     history = await test_monitor.get_metric_history("test.metric")
-    
+
     assert len(history) == 3
     assert all(m["value"] == 100 for m in history)
     assert all("timestamp" in m for m in history)
 
 @pytest.mark.asyncio
 async def test_counter_metrics(test_monitor):
-    """Test counter metric type handling"""
+    #"""Test counter metric type handling#"""
     test_monitor.register_metric(
         name="test.counter",
         metric_type=MetricType.COUNTER,
@@ -175,14 +175,14 @@ async def test_counter_metrics(test_monitor):
         unit="count",
         thresholds={}
     )
-    
+
     # Process incremental counter values
     await test_monitor.process_metrics({"test.counter": 5})
     await test_monitor.process_metrics({"test.counter": 3})
-    
+
     # Get metric history
     history = await test_monitor.get_metric_history("test.counter")
-    
+
     assert len(history) == 2
     assert history[0]["value"] == 5
     assert history[1]["value"] == 3
@@ -190,7 +190,7 @@ async def test_counter_metrics(test_monitor):
 
 @pytest.mark.asyncio
 async def test_metric_statistics(test_monitor):
-    """Test statistical calculations for metrics"""
+    #"""Test statistical calculations for metrics#"""
     test_monitor.register_metric(
         name="test.stats",
         metric_type=MetricType.HISTOGRAM,
@@ -198,15 +198,15 @@ async def test_metric_statistics(test_monitor):
         unit="ms",
         thresholds={}
     )
-    
+
     # Process various values
     values = [10, 20, 30, 40, 50]
     for value in values:
         await test_monitor.process_metrics({"test.stats": value})
-    
+
     # Get statistics - changed to await if get_metric_statistics is async
     stats = test_monitor.get_metric_statistics("test.stats")
-    
+
     assert stats["count"] == 5
     assert stats["min"] == 10
     assert stats["max"] == 50
@@ -217,14 +217,14 @@ async def test_metric_statistics(test_monitor):
 
 @pytest.mark.asyncio
 async def test_error_handling(test_monitor, mock_alert_manager):
-    """Test error handling during metric collection"""
+    #"""Test error handling during metric collection#"""
     test_monitor.alert_manager = mock_alert_manager
     mock_alert_manager.create_alert = AsyncMock()  # Use AsyncMock here
-    
+
     # Simulate an error during collection
     error = Exception("Test error")
     await test_monitor.handle_collection_error(error)
-    
+
     # Verify error alert was created
     mock_alert_manager.create_alert.assert_called_once()
     call_args = mock_alert_manager.create_alert.call_args[1]
@@ -234,20 +234,20 @@ async def test_error_handling(test_monitor, mock_alert_manager):
 # Adding new test for monitoring status
 @pytest.mark.asyncio
 async def test_monitoring_status(test_monitor):
-    """Test monitoring status management"""
+    #"""Test monitoring status management#"""
     assert not test_monitor._is_monitoring
-    
+
     async def callback(metrics, health):
         pass
-    
+
     monitoring_task = asyncio.create_task(
         test_monitor.start_monitoring(callback)
     )
-    
+
     try:
         await asyncio.sleep(0.1)
         assert test_monitor._is_monitoring
-        
+
         await test_monitor.stop_monitoring()
         assert not test_monitor._is_monitoring
     finally:
@@ -258,7 +258,7 @@ async def test_monitoring_status(test_monitor):
 # Adding new test for metric validation
 @pytest.mark.asyncio
 async def test_metric_validation(test_monitor):
-    """Test metric validation logic"""
+    #"""Test metric validation logic#"""
     # Test invalid metric registration with empty name
     with pytest.raises(ValueError, match="Metric name must be a non-empty string"):
         test_monitor.register_metric(
@@ -278,7 +278,7 @@ async def test_metric_validation(test_monitor):
             unit="count",
             thresholds={}
         )
-    
+
     # Test invalid threshold format
     with pytest.raises(ValueError):
         test_monitor.register_metric(
@@ -288,3 +288,5 @@ async def test_metric_validation(test_monitor):
             unit="count",
             thresholds={"INVALID": "not a number"}
         )
+
+

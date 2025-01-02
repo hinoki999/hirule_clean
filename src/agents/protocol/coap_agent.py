@@ -30,7 +30,7 @@ class CoAPAgent(BaseAgent):
         self.logger.info(f"Initialized CoAPAgent: {agent_id} on port {coap_port}")
 
     async def setup(self):
-        """Initialize the agent with proper error handling"""
+        ###"""Initialize the agent with proper error handling###"""
         try:
             await super().setup()
             if aiocoap:
@@ -46,14 +46,14 @@ class CoAPAgent(BaseAgent):
             raise
 
     async def start(self):
-        """Start the agent explicitly"""
+        ###"""Start the agent explicitly###"""
         if not self.is_running:
             await self.setup()
         await self.post_start()
         self.is_running = True
 
     async def post_start(self):
-        """Post-start initialization with proper error handling"""
+        ###"""Post-start initialization with proper error handling###"""
         try:
             await super().post_start()
             if aiocoap:
@@ -67,7 +67,7 @@ class CoAPAgent(BaseAgent):
             raise
 
     async def cleanup(self):
-        """Enhanced cleanup with proper error handling"""
+        ###"""Enhanced cleanup with proper error handling###"""
         try:
             if self._listener_task and not self._listener_task.done():
                 self._listener_task.cancel()
@@ -95,7 +95,7 @@ class CoAPAgent(BaseAgent):
             self._listener_task = None
 
     async def process_message(self, message: Message):
-        """Process messages with enhanced error handling"""
+        ###"""Process messages with enhanced error handling###"""
         try:
             self.logger.info(f"[CoAPAgent] Received Message ID {message.id}, Type: {message.message_type}")
             if message.message_type == "coap_request":
@@ -114,13 +114,13 @@ class CoAPAgent(BaseAgent):
             raise
 
     async def process_request(self, request: dict) -> dict:
-        """Process requests with input validation"""
+        ###"""Process requests with input validation###"""
         try:
             if not isinstance(request, dict):
                 raise ValueError("Request must be a dictionary")
-            
+
             self.logger.info(f"Processing CoAP request object: {request}")
-            
+
             # Validate required fields
             if request.get('method') not in ['GET', 'POST', 'PUT', 'DELETE']:
                 return {
@@ -143,7 +143,7 @@ class CoAPAgent(BaseAgent):
             }
 
     async def _start_coap_server(self):
-        """Start CoAP server with enhanced error handling and monitoring"""
+        ###"""Start CoAP server with enhanced error handling and monitoring###"""
         if not aiocoap:
             self.logger.warning("aiocoap not installed. Skipping server startup.")
             return
@@ -162,3 +162,5 @@ class CoAPAgent(BaseAgent):
             self.logger.error(f"Fatal error in CoAP server context: {e}")
             self.is_running = False
             raise
+
+

@@ -18,23 +18,23 @@ class SemanticAgent(BaseAgent):
         logging.info(f"Initialized semantic agent: {agent_id}")
 
     async def setup(self):
-        """Implement abstract setup method"""
+        ###"""Implement abstract setup method###"""
         logging.info(f"Setting up semantic agent: {self.agent_id}")
         # Add any additional setup logic here
         await super().setup()  # Don't forget to call parent setup
 
     async def process_message(self, message: Dict) -> Optional[Dict]:
-        """Implement abstract method for processing messages"""
+        ###"""Implement abstract method for processing messages###"""
         logging.info(f"Processing message: {message}")
         return {"status": "success", "message": "Message processed"}
 
     async def cleanup(self):
-        """Implement abstract method for cleanup"""
+        ###"""Implement abstract method for cleanup###"""
         logging.info("Cleaning up semantic agent")
         # Add any cleanup logic here
 
     async def process_task(self, task: Dict) -> Dict:
-        """Process a semantic analysis task"""
+        ###"""Process a semantic analysis task###"""
         try:
             logging.info(f"Processing task: {task}")
             results = {
@@ -46,14 +46,14 @@ class SemanticAgent(BaseAgent):
             return {
                 'status': 'success',
                 'output_file': output_file,
-                'summary': f"Found {task.get('max_results', 1)} results for query: {task['query']}"    
+                'summary': f"Found {task.get('max_results', 1)} results for query: {task['query']}"
             }
         except Exception as e:
             logging.error(f"Error processing task: {str(e)}")
             return {'status': 'error', 'message': str(e)}
 
     def _save_results(self, results: Dict) -> str:
-        """Save analysis results to a file"""
+        ###"""Save analysis results to a file###"""
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f"analysis_{timestamp}.json"
         filepath = os.path.join(self.results_dir, filename)
@@ -65,3 +65,5 @@ class SemanticAgent(BaseAgent):
         except Exception as e:
             logging.error(f"Error saving results: {str(e)}")
             raise
+
+

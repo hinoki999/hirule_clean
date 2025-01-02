@@ -42,26 +42,26 @@ class MessageBus:
 
 
 class MockMessageBus(MessageBus):
-    """A mock message bus for testing purposes."""
+    #"""A mock message bus for testing purposes.#"""
     def __init__(self):
         self._messages = {}
 
     async def start(self):
-        """Start the mock message bus (no-op)."""
+        #"""Start the mock message bus (no-op).#"""
         pass
 
     async def stop(self):
-        """Stop the mock message bus (no-op)."""
+        #"""Stop the mock message bus (no-op).#"""
         pass
 
     async def send_message(self, message: Message):
-        """Store messages in a dictionary by agent ID."""
+        #"""Store messages in a dictionary by agent ID.#"""
         if message.destination_agent_id not in self._messages:
             self._messages[message.destination_agent_id] = []
         self._messages[message.destination_agent_id].append(message)
 
     async def get_messages(self, agent_id: str):
-        """Retrieve all messages for a given agent ID."""
+        #"""Retrieve all messages for a given agent ID.#"""
         return self._messages.get(agent_id, [])
 
 
@@ -79,23 +79,23 @@ class BaseAgent:
         self.logger = logging.getLogger(__name__)
 
     async def setup(self):
-        """Placeholder for any agent setup you need."""
+        #"""Placeholder for any agent setup you need.#"""
         pass
 
     async def cleanup(self):
-        """Placeholder for any cleanup code you need."""
+        #"""Placeholder for any cleanup code you need.#"""
         pass
 
     async def start(self):
-        """Subclass responsibility."""
+        #"""Subclass responsibility.#"""
         raise NotImplementedError
 
     async def stop(self):
-        """Subclass responsibility."""
+        #"""Subclass responsibility.#"""
         raise NotImplementedError
 
     async def _start_heartbeat(self):
-        """Continuously sends heartbeat messages while the agent is running."""
+        #"""Continuously sends heartbeat messages while the agent is running.#"""
 
         async def heartbeat():
             while self.running:
@@ -115,7 +115,7 @@ class BaseAgent:
 
 
 class BaseTestAgent(BaseAgent):
-    """Base test agent implementation with heartbeat."""
+    #"""Base test agent implementation with heartbeat.#"""
 
     def __init__(self, agent_id: str, message_bus: MessageBus):
         super().__init__(agent_id, message_bus)
@@ -123,7 +123,7 @@ class BaseTestAgent(BaseAgent):
         self._task_processor = None
 
     async def start(self):
-        """Start the agent with proper event loop binding."""
+        #"""Start the agent with proper event loop binding.#"""
         if not self.running:
             self.running = True
             self._task_queue = asyncio.Queue()
@@ -131,7 +131,7 @@ class BaseTestAgent(BaseAgent):
             await self._start_heartbeat()
 
     async def _process_tasks(self):
-        """Process queued tasks."""
+        #"""Process queued tasks.#"""
         try:
             while self.running:
                 task = await self._task_queue.get()
@@ -145,7 +145,7 @@ class BaseTestAgent(BaseAgent):
             pass
 
     async def stop(self):
-        """Stop the agent and clean up resources."""
+        #"""Stop the agent and clean up resources.#"""
         if self.running:
             self.running = False
 
@@ -178,10 +178,10 @@ class BaseTestAgent(BaseAgent):
 #
 
 class TestAgent(BaseTestAgent):
-    """
+    #"""
     We prevent Pytest from thinking this is a test class
     by setting __test__ to False.
-    """
+    #"""
     __test__ = False
 
     # Provide any further agent-specific logic here if needed.
@@ -194,7 +194,7 @@ class TestAgent(BaseTestAgent):
 
 @pytest_asyncio.fixture
 async def test_agent():
-    """Fixture to create and clean up a test agent."""
+    #"""Fixture to create and clean up a test agent.#"""
     message_bus = MockMessageBus()
     await message_bus.start()
 
@@ -216,7 +216,7 @@ async def test_agent():
 
 @pytest.mark.asyncio
 async def test_heartbeat(test_agent: TestAgent):
-    """Test agent heartbeat functionality."""
+    #"""Test agent heartbeat functionality.#"""
     await test_agent.start()
 
     # Sleep briefly so the heartbeat can send at least one message
@@ -224,8 +224,10 @@ async def test_heartbeat(test_agent: TestAgent):
 
     # Check that a heartbeat message was recorded
     messages = await test_agent.message_bus.get_messages(test_agent.agent_id)
-    assert any(msg.message_type == "heartbeat" for msg in messages), \
+    assert any(msg.message_type == "heartbeat" for msg in messages), 
         "Expected at least one heartbeat message."
 
     # Cleanup
     await test_agent.stop()
+
+

@@ -7,19 +7,19 @@ from tests.test_agents.test_helpers import AgentTestHarness
 
 @pytest_asyncio.fixture
 async def test_env():
-    """Basic test environment setup"""
+    #"""Basic test environment setup#"""
     coordinator = MasterCoordinator()
     harness = AgentTestHarness(coordinator)
-    
+
     # Setup
     await coordinator.setup()
     assert coordinator.status == CoordinatorStatus.RUNNING
-    
+
     yield {
         "coordinator": coordinator,
         "harness": harness
     }
-    
+
     # Ensure proper cleanup
     try:
         await coordinator.cleanup()
@@ -30,23 +30,25 @@ async def test_env():
 
 @pytest.mark.asyncio
 async def test_coordinator_initialization(test_env):
-    """Verify basic coordinator initialization"""
+    #"""Verify basic coordinator initialization#"""
     coordinator = test_env["coordinator"]
     harness = test_env["harness"]
-    
+
     # Test basic initialization
     status = await coordinator.get_status()
     harness.record_event({
         "type": "initialization_check",
         "status": status
     })
-    
+
     assert status["status"] == "RUNNING"
-    
+
     # Verify initial state
     assert len(coordinator.registered_agents) == 0
     assert coordinator.task_queue.empty()
-    
+
     # Verify health check task is running
     assert hasattr(coordinator, '_health_check_task')
     assert not coordinator._health_check_task.done()
+
+

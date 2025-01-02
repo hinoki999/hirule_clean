@@ -9,25 +9,32 @@ class MockAgent(BaseAgent):
         self.processed_tasks = []
         print(f"Initialized MockAgent {agent_id} with capabilities: {self.capabilities}")
 
+async def process_task(self, task: dict):
+    self.process_task_called = True
+    self.processed_tasks.append(task)
+    return True
+
     async def setup(self):
-        """Setup the mock agent"""
+        #"""Setup the mock agent#"""
         await super().setup()
         self.status = "RUNNING"
-        
+
     async def cleanup(self):
-        """Cleanup the mock agent"""
+        #"""Cleanup the mock agent#"""
         self.status = "STOPPED"
 
     async def process_message(self, message: dict):
-        """Process a test message"""
+        #"""Process a test message#"""
         return {"status": "success", "message": "processed"}
 
     async def process_task(self, task: dict):
-        """Process a test task"""
+        #"""Process a test task#"""
         self.process_task_called = True
         self.processed_tasks.append(task)
         return True
 
     async def get_status(self):
-        """Get mock agent status"""
+        #"""Get mock agent status#"""
         return {"status": self.status}
+
+

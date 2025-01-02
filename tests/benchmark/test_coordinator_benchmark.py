@@ -9,7 +9,7 @@ from tests.test_agents.mock_agent import MockAgent
 
 @pytest_asyncio.fixture
 async def coordinator():
-    """Create and setup a coordinator for testing"""
+    #"""Create and setup a coordinator for testing#"""
     coord = MasterCoordinator()
     await coord.setup()
     yield coord
@@ -17,7 +17,7 @@ async def coordinator():
 
 @pytest_asyncio.fixture
 async def mock_agent():
-    """Create a mock agent for testing"""
+    #"""Create a mock agent for testing#"""
     agent = MockAgent()
     await agent.setup()
     yield agent
@@ -26,12 +26,12 @@ async def mock_agent():
 @pytest.mark.benchmark
 @pytest.mark.asyncio
 async def test_coordinator_performance(coordinator, mock_agent):
-    """Benchmark coordinator performance"""
+    #"""Benchmark coordinator performance#"""
     start_time = time.time()
-    
+
     # Setup
     await coordinator.register_agent(mock_agent)
-    
+
     # Submit and process 100 tasks
     tasks = []
     for i in range(100):
@@ -42,12 +42,14 @@ async def test_coordinator_performance(coordinator, mock_agent):
         }
         task_id = await coordinator.submit_task(task)
         tasks.append(task_id)
-    
+
     # Process tasks
     await coordinator.process_tasks()
-    
+
     execution_time = time.time() - start_time
-    
+
     # Assertions
     assert execution_time < 1.0  # Should complete in under 1 second
     assert coordinator.task_queue.empty()
+
+

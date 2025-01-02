@@ -8,13 +8,13 @@ from src.integrations.hunter import HunterClient
 from src.config.api_keys import APIKeys
 
 class EnrichmentService:
-    """Handles external data enrichment operations with real APIs"""
-    
+    ###"""Handles external data enrichment operations with real APIs###"""
+
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.api_keys = APIKeys()
         self.api_keys.load_from_env()
-        
+
         try:
             self.clearbit = ClearbitClient(self.api_keys.get_key('clearbit'))
             self.hunter = HunterClient(self.api_keys.get_key('hunter'))
@@ -23,17 +23,17 @@ class EnrichmentService:
             raise
 
     async def close(self):
-        """Close all API client sessions"""
+        ###"""Close all API client sessions###"""
         await asyncio.gather(
             self.clearbit.close(),
             self.hunter.close()
         )
 
     async def enrich_lead(self, lead_data: Dict) -> Dict:
-        """Enrich lead data using multiple API services"""
+        ###"""Enrich lead data using multiple API services###"""
         try:
             # ... (previous enrichment code) ...
-            
+
             # Add API-specific enrichment
             if domain:
                 clearbit_company = await self.clearbit.enrich_company(domain)
@@ -54,7 +54,7 @@ class EnrichmentService:
                         "email_score": email_verification.get("score"),
                         "email_verified": email_verification.get("result") == "deliverable"
                     })
-                
+
                 # Enrich person data with Clearbit
                 person_data = await self.clearbit.enrich_person(email)
                 if "error" not in person_data:
@@ -66,7 +66,7 @@ class EnrichmentService:
                     })
 
             return enriched_data
-            
+
         except Exception as e:
             self.logger.error(f"Enrichment failed: {str(e)}")
             return {
@@ -76,3 +76,5 @@ class EnrichmentService:
                 "contact_info": {"verified": False, "error": str(e)} if email else None,
                 "timestamp": datetime.now().isoformat()
             }
+
+

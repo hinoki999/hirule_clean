@@ -1,0 +1,86 @@
+import pytest
+from decimal import Decimal
+from datetime import datetime
+from src.agents.trading.messages import (
+    OrderType,
+    OrderSide,
+    OrderStatus,
+    Order,
+    MarketData,
+    TradingMessageTypes
+)
+
+def test_order_creation():
+    ###"""Test basic order creation and validation###"""
+    order = Order(
+        order_id="test-123",
+        symbol="BTC/USD",
+        side=OrderSide.BUY,
+        order_type=OrderType.MARKET,
+        quantity=Decimal("1.0"),
+        price=None,
+        stop_price=None,
+        status=OrderStatus.NEW
+    )
+
+    assert order.order_id == "test-123"
+    assert order.symbol == "BTC/USD"
+    assert order.side == OrderSide.BUY
+    assert order.order_type == OrderType.MARKET
+    assert order.quantity == Decimal("1.0")
+    assert order.status == OrderStatus.NEW
+
+def test_market_data_creation():
+    ###"""Test market data creation and validation###"""
+    timestamp = datetime.now()
+    market_data = MarketData(
+        symbol="BTC/USD",
+        last_price=50000.0,
+        timestamp=timestamp,
+        bid=49999.0,
+        ask=50001.0,
+        volume=1.5
+    )
+
+    assert market_data.symbol == "BTC/USD"
+    assert market_data.last_price == 50000.0
+    assert market_data.timestamp == timestamp
+    assert market_data.bid == 49999.0
+    assert market_data.ask == 50001.0
+    assert market_data.volume == 1.5
+
+def test_order_type_validation():
+    ###"""Test that order types are correctly defined###"""
+    assert OrderType.MARKET.value == "MARKET"
+    assert OrderType.LIMIT.value == "LIMIT"
+    assert OrderType.STOP.value == "STOP"
+    assert OrderType.STOP_LIMIT.value == "STOP_LIMIT"
+
+def test_order_side_validation():
+    ###"""Test order side validation###"""
+    assert OrderSide.BUY.value == "BUY"
+    assert OrderSide.SELL.value == "SELL"
+
+def test_order_status_transitions():
+    ###"""Test order status transitions###"""
+    order = Order(
+        order_id="test-123",
+        symbol="BTC/USD",
+        side=OrderSide.BUY,
+        order_type=OrderType.MARKET,
+        quantity=Decimal("1.0"),
+        status=OrderStatus.NEW
+    )
+
+    assert order.status == OrderStatus.NEW
+    order.status = OrderStatus.PENDING
+    assert order.status == OrderStatus.PENDING
+    order.status = OrderStatus.FILLED
+    assert order.status == OrderStatus.FILLED
+
+def test_message_types():
+    ###"""Test trading message types are correctly defined###"""
+    assert TradingMessageTypes.MARKET_DATA == "market_data"
+    assert TradingMessageTypes.ORDER_NEW == "order_new"
+    assert TradingMessageTypes.ORDER_UPDATE == "order_update"
+    assert TradingMessageTypes.ORDER_CANCEL == "order_cancel"

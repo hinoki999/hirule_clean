@@ -20,7 +20,7 @@ async def test_basic_functionality(network_agent):
     }
     success = await network_agent.connect_peer({'type': 'connect_peer', **peer1})
     assert success
-    
+
     # Test broadcasting a transaction
     tx_task = {
         'type': 'broadcast_transaction',
@@ -32,7 +32,7 @@ async def test_basic_functionality(network_agent):
     }
     result = await network_agent.process_task(tx_task)
     assert result['status'] == 'success'
-    
+
     # Test peer info retrieval
     info_task = {'type': 'get_peer_info'}
     result = await network_agent.process_task(info_task)
@@ -48,7 +48,7 @@ async def test_max_peers(network_agent):
             'port': 8000 + i
         }
         await network_agent.connect_peer({'type': 'connect_peer', **peer})
-    
+
     # Verify peer count
     info_task = {'type': 'get_peer_info'}
     result = await network_agent.process_task(info_task)
@@ -63,7 +63,7 @@ async def test_network_messages(network_agent):
         'port': 8000
     }
     await network_agent.connect_peer({'type': 'connect_peer', **peer1})
-    
+
     # Test block broadcasting
     block_task = {
         'type': 'broadcast_block',
@@ -75,7 +75,7 @@ async def test_network_messages(network_agent):
     }
     result = await network_agent.process_task(block_task)
     assert result is not None
-    
+
     # Test sync request
     sync_task = {
         'type': 'sync_request',
@@ -88,3 +88,5 @@ async def test_network_messages(network_agent):
 
 if __name__ == '__main__':
     pytest.main([__file__])
+
+

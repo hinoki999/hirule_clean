@@ -1,0 +1,65 @@
+from decimal import Decimal
+from typing import Optional, Dict
+from collections import deque
+from datetime import datetime, timedelta
+from .strategy import TradingStrategy
+from .messages import Order, OrderType, OrderSide, OrderStatus, MarketData
+
+class MomentumStrategy(TradingStrategy):
+    ###"""Simple momentum trading strategy###"""
+
+    def __init__(self, *args,
+                 momentum_window: int = 20,
+                 momentum_threshold: float = 0.02,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self.momentum_window = momentum_window
+        self.momentum_threshold = momentum_threshold
+        self.price_history: Dict[str, deque] = {
+            symbol: deque(maxlen=momentum_window)
+            for symbol in self.symbols
+        }
+
+    async def on_market_data(self, data: MarketData) -> Optional[Order]:
+        ###"""Generate trading signals based on momentum###"""
+        if data.symbol not in self.symbols:
+            return None
+
+        # Update price history
+        self.price_history[data.symbol].append(data.last_price)
+        self.update_market_data(data)
+
+        # Wait for enough price history
+        if len(self.price_history[data.symbol]) < self.momentum_window:
+            return None
+
+        # Calculate momentum
+        prices = list(self.price_history[data.symbol])
+        momentum = (prices[-1] - prices[0]) / prices[0]
+
+        # Generate signal if momentum exceeds threshold
+        if abs(momentum) > self.momentum_threshold:
+            signal = momentum / self.momentum_threshold  # Scale signal by threshold
+            return await self.execute_signal(data.symbol, signal, data.last_price)
+
+        return None
+
+    async def on_order_fill(self, order: Order):
+        ###"""Handle order fills###"""
+        if order.status != OrderStatus.FILLED:
+            return
+
+        # Update position
+        fill_quantity = order.filled_quantity
+        if order.side == OrderSide.SELL:
+            fill_quantity = -fill_quantity
+
+        self.update_position(order.symbol, fill_quantity)
+        # Reset price history for this symbol
+        self.price_history[order.symbol].clear()
+
+    def update_market_data(self, data: MarketData):
+        ###"""Update market data and price history###"""
+        super().update_market_data(data)
+        if data.symbol in self.price_history:
+            self.price_history[data.symbol].append(data.last_price)

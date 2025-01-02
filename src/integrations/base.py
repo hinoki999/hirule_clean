@@ -6,21 +6,21 @@ from typing import Optional, Dict, Any
 from .rate_limiter import RateLimiter
 
 class APIError(Exception):
-    """Base exception for API errors"""
+    ###"""Base exception for API errors###"""
     def __init__(self, message: str, status_code: Optional[int] = None):
         super().__init__(message)
         self.status_code = status_code
 
 class RateLimitError(APIError):
-    """Raised when API rate limit is exceeded"""
+    ###"""Raised when API rate limit is exceeded###"""
     pass
 
 class AuthenticationError(APIError):
-    """Raised when API authentication fails"""
+    ###"""Raised when API authentication fails###"""
     pass
 
 class ServerError(APIError):
-    """Raised when API server returns an error"""
+    ###"""Raised when API server returns an error###"""
     pass
 
 @dataclass
@@ -58,7 +58,7 @@ class BaseAPIClient:
             self._session = None
 
     def _should_retry(self, attempt: int, error: Exception) -> bool:
-        """Determine if request should be retried based on error type"""
+        ###"""Determine if request should be retried based on error type###"""
         if attempt >= self.config.max_retries:
             return False
 
@@ -73,7 +73,7 @@ class BaseAPIClient:
         return False
 
     async def _handle_response_error(self, response: aiohttp.ClientResponse) -> None:
-        """Handle error responses with appropriate custom exceptions"""
+        ###"""Handle error responses with appropriate custom exceptions###"""
         if response.status == 401:
             raise AuthenticationError("Invalid API key", status_code=401)
         elif response.status == 429:
@@ -84,9 +84,9 @@ class BaseAPIClient:
             response.raise_for_status()
 
     async def _request(
-        self, 
-        method: str, 
-        endpoint: str, 
+        self,
+        method: str,
+        endpoint: str,
         params: Optional[Dict[str, Any]] = None,
         json: Optional[Dict[str, Any]] = None,
         **kwargs
@@ -116,8 +116,10 @@ class BaseAPIClient:
                 last_error = e
                 if not self._should_retry(attempt, e):
                     break
-                
+
                 delay = self.config.retry_delay_base ** attempt * (0.5 + random.random())
                 await asyncio.sleep(delay)
 
         raise last_error
+
+

@@ -1,0 +1,117 @@
+from typing import Dict, List, Tuple, Optional
+from decimal import Decimal
+import numpy as np
+from datetime import datetime
+import asyncio
+import logging
+
+from src.config.trading_config import TradingConfig
+from src.agents.trading.market_regime import MarketRegimeDetector, MarketState
+
+class SmartTradingThresholds:
+    """
+    Calculates adaptive trading thresholds based on market regime and trade size.
+    """
+
+    def __init__(self, config: TradingConfig, market_regime_detector: MarketRegimeDetector):
+        self.config = config
+        self.market_regime_detector = market_regime_detector
+        self.initial_thresholds: Dict[str, float] = {}  # Base thresholds per symbol
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.historical_vols: Dict[str, List[float]] = {}
+        self.historical_costs: Dict[str, List[float]] = {}
+
+    async def initialize(self):
+        """Initialize any necessary state or connections."""
+        self.logger.debug("SmartTradingThresholds initialized.")
+        pass
+
+    def update_market_data(self, symbol: str, price: float, volume: float,
+                           current_vol: float, trade_cost: float, timestamp: datetime):
+        """
+        Updates historical volatility and cost data based on incoming market data.
+        """
+        if symbol not in self.historical_vols:
+            self.historical_vols[symbol] = []
+            self.historical_costs[symbol] = []
+            self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Initialized historical data for symbol: {symbol}")
+
+        self.historical_vols[symbol].append(current_vol)
+        self.historical_costs[symbol].append(trade_cost)
+
+        if len(self.historical_vols[symbol]) > self.config.vol_window:
+            self.historical_vols[symbol] = self.historical_vols[symbol][-self.config.vol_window:]
+            self.historical_costs[symbol] = self.historical_costs[symbol][-self.config.vol_window:]
+            self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Trimmed historical data for symbol: {symbol}")
+
+        self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Updated market data for symbol: {symbol}")
+
+    def calculate_thresholds_and_sizing(self, symbol: str, trade_size: Decimal, base_price: float) -> Tuple[float, float]:
+        """
+        Calculates adaptive thresholds and position sizing based on market regime.
+        """
+        regime_confidence = self.market_regime_detector.get_regime_confidence(symbol)
+        if regime_confidence < 0.5:
+            self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Insufficient regime confidence for {symbol}. Using base threshold.")
+            adaptive_threshold = self.config.base_cost_threshold
+        else:
+            regime = self.market_regime_detector.current_regimes.get(symbol)
+            if not regime:
+                self.logger.debug(f"[SMART_TRADING_THRESHOLDS] No regime detected for {symbol}. Using base threshold.")
+                adaptive_threshold = self.config.base_cost_threshold
+            else:
+                adaptive_threshold = self._calculate_regime_adjusted_threshold(symbol, trade_size, base_price, regime)
+
+        size_multiplier = self._calculate_size_multiplier(symbol)
+        self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Calculated thresholds and sizing for {symbol}: Threshold={adaptive_threshold}, Size Multiplier={size_multiplier}")
+        return adaptive_threshold, size_multiplier
+
+    def _calculate_regime_adjusted_threshold(self, symbol: str, trade_size: Decimal, base_price: float, regime: Optional[MarketState]) -> float:
+        base_threshold = self.initial_thresholds.get(symbol, self.config.base_cost_threshold)
+
+        trade_value = float(trade_size) * base_price
+        norm_size = trade_value / 1_000_000
+        size_adjustment = 1.0 + np.log1p(norm_size) * self.config.size_scaling_factor
+
+        adaptive_threshold = base_threshold * size_adjustment
+
+        if regime:
+            vol_mult = self._get_volatility_multiplier(regime.volatility_regime)
+            adaptive_threshold *= vol_mult
+
+        if self.has_sufficient_data(symbol):
+            recent_vol = np.mean(self.historical_vols[symbol][-5:])
+            hist_vol = np.mean(self.historical_vols[symbol])
+            vol_ratio = recent_vol / hist_vol if hist_vol > 0 else 1.0
+            adaptive_threshold *= (1.0 + (vol_ratio - 1.0) * 0.5)
+
+        adaptive_threshold_clipped = float(np.clip(adaptive_threshold,
+                                                   self.config.base_cost_threshold,
+                                                   self.config.max_cost_threshold))
+        self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Regime adjusted threshold for {symbol}: {adaptive_threshold_clipped}")
+        return adaptive_threshold_clipped
+
+    def has_sufficient_data(self, symbol: str) -> bool:
+        return (symbol in self.historical_vols and
+                len(self.historical_vols[symbol]) >= self.config.vol_window)
+
+    def _get_volatility_multiplier(self, volatility_regime: str) -> float:
+        mapping = {
+            "high": 0.5,
+            "normal": 0.7,
+            "low": 0.9
+        }
+        vol_adjustment = mapping.get(volatility_regime, 0.7)
+        self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Volatility adjustment for regime '{volatility_regime}': {vol_adjustment}")
+        return vol_adjustment
+
+    def _calculate_size_multiplier(self, symbol: str) -> float:
+        regime_confidence = self.market_regime_detector.get_regime_confidence(symbol)
+        if regime_confidence >= 0.9:
+            size_multiplier = 0.5
+        elif regime_confidence >= 0.7:
+            size_multiplier = 0.6
+        else:
+            size_multiplier = 0.7
+        self.logger.debug(f"[SMART_TRADING_THRESHOLDS] Size multiplier for {symbol}: {size_multiplier}")
+        return size_multiplier

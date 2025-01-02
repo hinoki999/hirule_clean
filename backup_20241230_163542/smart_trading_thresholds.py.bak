@@ -1,0 +1,34 @@
+from typing import Dict, Optional, Tuple
+from decimal import Decimal
+import numpy as np
+from datetime import datetime
+from src.agents.trading.market_regime import MarketRegimeDetector, MarketState
+
+class SmartTradingThresholds:
+    def __init__(self, config=None):
+        self.config = config or {}
+        self.historical_vols = {}
+        self.regime_detector = MarketRegimeDetector(config)
+        self.base_cost_threshold = 0.001
+        self.max_cost_threshold = 0.01
+        self.size_scaling_factor = 0.1
+        self.last_update = datetime.now()
+
+    def get_system_health(self, symbol: str) -> Dict:
+        """Get system health metrics including circuit breaker status."""
+        regime_confidence = self.regime_detector.get_regime_confidence(symbol)
+        is_active = bool(self.is_circuit_breaker_active(symbol))
+        return {
+            'health_status': 'Good',
+            'circuit_breaker_active': is_active,  # Native Python bool
+            'regime_confidence': float(regime_confidence),  # Native Python float
+            'last_update': self.last_update.isoformat()
+        }
+
+    def is_circuit_breaker_active(self, symbol: str) -> bool:
+        """Check if circuit breaker is active for symbol."""
+        return False  # Default implementation
+
+    def _check_circuit_breaker_conditions(self, symbol: str) -> bool:
+        """Internal method to check circuit breaker conditions."""
+        return False  # Default implementation

@@ -4,9 +4,9 @@ import asyncio
 import logging
 
 class ProtocolAgent(BaseAgent):
-    """
+    ###"""
     Protocol Agent for handling protocol translation.
-    """
+    ###"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.translations = {
@@ -16,12 +16,12 @@ class ProtocolAgent(BaseAgent):
         }
 
     async def setup(self):
-        """Setup protocol agent."""
+        ###"""Setup protocol agent.###"""
         self.logger.info(f"Setting up Protocol Agent {self.agent_id}")
         self.register_handler(ProtocolMessageType.PROTOCOL_TRANSLATION, self.handle_translation)
 
     async def handle_translation(self, message: ProtocolMessage):
-        """Handle protocol translation requests."""
+        ###"""Handle protocol translation requests.###"""
         source_protocol = message.payload.get("source_protocol")
         target_protocol = message.payload.get("target_protocol")
         data = message.payload.get("data")
@@ -48,19 +48,21 @@ class ProtocolAgent(BaseAgent):
             await self.protocol.send_message(error_response)
 
     async def _handle_mqtt(self, data, target_protocol):
-        """Translate MQTT data to target protocol."""
+        ###"""Translate MQTT data to target protocol.###"""
         # Add actual MQTT parsing and conversion logic
         self.logger.info(f"Translating MQTT data to {target_protocol}")
         return f"MQTT data converted to {target_protocol}"
 
     async def _handle_coap(self, data, target_protocol):
-        """Translate CoAP data to target protocol."""
+        ###"""Translate CoAP data to target protocol.###"""
         # Add actual CoAP parsing and conversion logic
         self.logger.info(f"Translating CoAP data to {target_protocol}")
         return f"CoAP data converted to {target_protocol}"
 
     async def _handle_http3(self, data, target_protocol):
-        """Translate HTTP/3 data to target protocol."""
+        ###"""Translate HTTP/3 data to target protocol.###"""
         # Add actual HTTP/3 parsing and conversion logic
         self.logger.info(f"Translating HTTP/3 data to {target_protocol}")
         return f"HTTP/3 data converted to {target_protocol}"
+
+

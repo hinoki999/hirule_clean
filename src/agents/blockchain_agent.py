@@ -5,9 +5,9 @@ import asyncio
 import logging
 
 class BlockchainAgent(BaseAgent):
-    """
+    ###"""
     Blockchain Agent for managing blockchain interactions.
-    """
+    ###"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.metrics = SystemMetrics()
@@ -15,13 +15,13 @@ class BlockchainAgent(BaseAgent):
 
 
     async def setup(self):
-        """Setup blockchain agent."""
+        ###"""Setup blockchain agent.###"""
         self.logger.info(f"Setting up Blockchain Agent {self.agent_id}")
         self.register_handler(ProtocolMessageType.TASK_ASSIGNMENT, self.handle_transaction)
         self.register_handler(ProtocolMessageType.TASK_STATUS, self.handle_status_update)
 
     async def handle_transaction(self, message: ProtocolMessage):
-        """Handle incoming blockchain transaction task."""
+        ###"""Handle incoming blockchain transaction task.###"""
         transaction_data = message.payload.get("transaction_data")
         try:
             # Simulate zkRollup aggregation
@@ -49,18 +49,20 @@ class BlockchainAgent(BaseAgent):
             await self.protocol.send_message(error_response)
 
     async def aggregate_transactions(self, transactions):
-        """Aggregate transactions for zkRollup."""
+        ###"""Aggregate transactions for zkRollup.###"""
         self.logger.info("Aggregating transactions for zkRollup")
         # Simulate aggregation logic
         return f"Aggregated {len(transactions)} transactions"
 
     async def generate_proof(self, aggregated_data):
-        """Generate zkProof for aggregated data."""
+        ###"""Generate zkProof for aggregated data.###"""
         self.logger.info("Generating zkProof for aggregated data")
         # Simulate proof generation logic
         return f"zkProof for {aggregated_data}"
 
     async def handle_status_update(self, message: ProtocolMessage):
-        """Handle status updates."""
+        ###"""Handle status updates.###"""
         task_status = message.payload.get("status")
         self.logger.info(f"Task status updated: {task_status}")
+
+

@@ -1,0 +1,45 @@
+import pytest
+from decimal import Decimal
+from datetime import datetime
+from src.agents.trading.risk_management import RiskManager, RiskLimits, PositionRisk
+
+@pytest.fixture
+def risk_manager():
+    limits = RiskLimits(
+        max_position_size=Decimal("1.0"),
+        max_notional=Decimal("100000"),
+        max_drawdown=0.1,
+        position_limits={"BTC/USD": Decimal("2.0")}
+    )
+    return RiskManager(limits)
+
+def test_position_limits(risk_manager):
+    ###"""Test position size limits###"""
+    result, _ = risk_manager.can_place_order("BTC/USD", Decimal("0.5"), 50000.0)
+    assert result is True
+
+    result, _ = risk_manager.can_place_order("BTC/USD", Decimal("2.5"), 50000.0)
+    assert result is False
+
+def test_notional_limits(risk_manager):
+    ###"""Test notional value limits###"""
+    result, _ = risk_manager.can_place_order("BTC/USD", Decimal("1.0"), 50000.0)
+    assert result is True
+
+    result, _ = risk_manager.can_place_order("BTC/USD", Decimal("3.0"), 50000.0)
+    assert result is False
+
+def test_portfolio_risk(risk_manager):
+    ###"""Test portfolio risk calculations###"""
+    risk_manager.positions["BTC/USD"] = PositionRisk(
+        symbol="BTC/USD",
+        position_size=Decimal("0.5"),
+        notional_value=Decimal("25000"),
+        unrealized_pnl=Decimal("1000"),
+        mark_price=50000.0,
+        average_entry=48000.0
+    )
+
+    metrics = risk_manager.calculate_portfolio_risk()
+    assert metrics["total_notional"] == 25000.0
+    assert metrics["total_pnl"] == 1000.0

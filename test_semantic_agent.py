@@ -6,10 +6,10 @@ from src.agents.semantic_agent import SemanticAgent
 
 @pytest.fixture(scope="module")
 async def setup_test_env():
-    """Setup test environment with required directories and config"""
+    #"""Setup test environment with required directories and config#"""
     os.makedirs("config", exist_ok=True)
     os.makedirs("results", exist_ok=True)
-    
+
     test_config = {
         "api_key": os.getenv('OPENAI_API_KEY'),
         "endpoint": "https://api.openai.com/v1"
@@ -40,7 +40,7 @@ async def test_semantic_agent_process_task(setup_test_env, semantic_agent):
         "query": "What are three interesting facts about quantum computing?",
         "max_results": 1
     }
-    
+
     result = await semantic_agent.process_task(task_data)
     assert result["status"] == "success", f"Task failed with error: {result.get('error', 'Unknown error')}"
     assert "output_file" in result
@@ -57,10 +57,12 @@ async def test_semantic_agent_analyze(setup_test_env, semantic_agent):
         "What are three interesting facts about quantum computing?",
         max_results=1
     )
-    
+
     assert result["status"] == "success"
     assert os.path.exists(result["output_file"])
-    
+
     with open(result["output_file"], "r") as f:
         analysis = json.load(f)
         assert isinstance(analysis, dict), "Analysis output should be a dictionary"
+
+

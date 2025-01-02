@@ -1,0 +1,28 @@
+from typing import Dict, Optional, Tuple
+from decimal import Decimal
+import numpy as np
+from src.agents.trading.market_regime import MarketRegimeDetector, MarketState
+
+class SmartTradingThresholds:
+    def __init__(self, config=None):
+        self.config = config or {}
+        self.historical_vols = {}
+        self.regime_detector = MarketRegimeDetector(config)
+        self.base_cost_threshold = 0.001
+        self.max_cost_threshold = 0.01
+        self.size_scaling_factor = 0.1
+
+    def get_system_health(self, symbol: str) -> Dict:
+        """Get system health metrics including circuit breaker status."""
+        regime_confidence = self.regime_detector.get_regime_confidence(symbol)
+        return {
+            'health_status': 'Good',
+            'circuit_breaker_active': bool(self.is_circuit_breaker_active(symbol)),  # Convert np.bool_ to Python bool
+            'regime_confidence': float(regime_confidence),  # Convert np.float64 to Python float
+            'last_update': self.last_update.isoformat() if hasattr(self, 'last_update') else None
+        }
+
+    def is_circuit_breaker_active(self, symbol: str) -> bool:
+        """Check if circuit breaker is active for symbol."""
+        # Convert numpy bool to Python bool before returning
+        return bool(self._check_circuit_breaker_conditions(symbol))

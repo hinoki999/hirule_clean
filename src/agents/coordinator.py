@@ -8,10 +8,10 @@ from src.core.utils import SystemMetrics
 from src.agents.capability import CapabilityRegistry
 
 class MasterCoordinator:
-    """
+    ###"""
     Master Coordinator enhanced with caching, task prioritization, protocol handling,
     and GPT-4 integration for task reasoning and optimization.
-    """
+    ###"""
 
     def __init__(self, *args, **kwargs):
         # Initialize core components
@@ -33,9 +33,9 @@ class MasterCoordinator:
         openai.api_key = self.openai_api_key
 
     async def try_assign_task(self, task: Task) -> bool:
-        """
+        ###"""
         Attempt to assign a task to a capable agent.
-        """
+        ###"""
         try:
             capable_agents = [
                 agent_id
@@ -56,9 +56,9 @@ class MasterCoordinator:
             return False
 
     async def assign_task_to_agent(self, agent_id: str, task: Task):
-        """
+        ###"""
         Assign a task to an agent and notify them.
-        """
+        ###"""
         try:
             task.status = TaskStatus.ASSIGNED
             task.assigned_agent = agent_id
@@ -71,3 +71,5 @@ class MasterCoordinator:
             self.logger.info(f"Task {task.task_id} successfully sent to agent {agent_id}.")
         except Exception as e:
             self.logger.error(f"Error sending task {task.task_id} to agent {agent_id}: {e}")
+
+

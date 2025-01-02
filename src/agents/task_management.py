@@ -21,7 +21,7 @@ class TaskPriority(Enum):
 
 @dataclass
 class Task:
-    """Represents a task in the system."""
+    ###"""Represents a task in the system.###"""
     task_id: str
     priority: TaskPriority
     required_capability: str
@@ -37,20 +37,20 @@ class Task:
     result: Optional[Dict[str, Any]] = None
 
 class TaskTracker:
-    """Manages task lifecycle and dependencies."""
-    
+    ###"""Manages task lifecycle and dependencies.###"""
+
     def __init__(self):
         self.tasks: Dict[str, Task] = {}
         self.agent_tasks: Dict[str, List[str]] = {}  # agent_id -> task_ids
         self._lock = asyncio.Lock()
-        
-    def create_task(self, 
+
+    def create_task(self,
                     required_capability: str,
                     payload: Dict[str, Any],
                     priority: TaskPriority = TaskPriority.MEDIUM,
                     estimated_load: float = 0.1,
                     dependencies: List[str] = None) -> Task:
-        """Create a new task."""
+        ###"""Create a new task.###"""
         task_id = str(uuid.uuid4())
         task = Task(
             task_id=task_id,
@@ -70,32 +70,32 @@ class TaskTracker:
         return task
 
     async def assign_task(self, task_id: str, agent_id: str):
-        """Assign a task to an agent."""
+        ###"""Assign a task to an agent.###"""
         async with self._lock:
             if task_id not in self.tasks:
                 raise ValueError(f"Task {task_id} not found")
-                
+
             task = self.tasks[task_id]
             task.assigned_agent = agent_id
             task.status = TaskStatus.ASSIGNED
-            
+
             if agent_id not in self.agent_tasks:
                 self.agent_tasks[agent_id] = []
             self.agent_tasks[agent_id].append(task_id)
 
-    async def update_task_status(self, 
-                               task_id: str, 
-                               status: TaskStatus, 
+    async def update_task_status(self,
+                               task_id: str,
+                               status: TaskStatus,
                                result: Dict[str, Any] = None,
                                actual_load: float = None):
-        """Update task status and optionally store result."""
+        ###"""Update task status and optionally store result.###"""
         async with self._lock:
             if task_id not in self.tasks:
                 raise ValueError(f"Task {task_id} not found")
-                
+
             task = self.tasks[task_id]
             task.status = status
-            
+
             if status == TaskStatus.RUNNING and not task.started_at:
                 task.started_at = time.time()
             elif status == TaskStatus.COMPLETED:
@@ -104,11 +104,11 @@ class TaskTracker:
                 task.actual_load = actual_load
 
     async def get_agent_load(self, agent_id: str) -> float:
-        """Calculate current load for an agent."""
+        ###"""Calculate current load for an agent.###"""
         async with self._lock:
             if agent_id not in self.agent_tasks:
                 return 0.0
-                
+
             total_load = 0.0
             for task_id in self.agent_tasks[agent_id]:
                 task = self.tasks[task_id]
@@ -117,7 +117,7 @@ class TaskTracker:
             return total_load
 
     async def get_pending_tasks(self, capability: str = None) -> List[Task]:
-        """Get all pending tasks, optionally filtered by capability."""
+        ###"""Get all pending tasks, optionally filtered by capability.###"""
         async with self._lock:
             pending = []
             for task in self.tasks.values():
@@ -127,11 +127,11 @@ class TaskTracker:
             return sorted(pending, key=lambda t: t.priority.value, reverse=True)
 
     async def reassign_tasks(self, from_agent: str, to_agent: str = None):
-        """Reassign tasks from one agent to another or back to pending."""
+        ###"""Reassign tasks from one agent to another or back to pending.###"""
         async with self._lock:
             if from_agent not in self.agent_tasks:
                 return
-                
+
             tasks_to_reassign = self.agent_tasks[from_agent]
             for task_id in tasks_to_reassign:
                 task = self.tasks[task_id]
@@ -145,5 +145,7 @@ class TaskTracker:
                     else:
                         task.assigned_agent = None
                         task.status = TaskStatus.PENDING
-                        
+
             del self.agent_tasks[from_agent]
+
+

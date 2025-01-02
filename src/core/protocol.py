@@ -13,21 +13,21 @@ class ProtocolMessageType(Enum):
     REGISTER = "register"
     HEARTBEAT = "heartbeat"
     SHUTDOWN = "shutdown"
-    
+
     # Task-related messages
     TASK_REQUEST = "task_request"
     TASK_ASSIGNMENT = "task_assignment"
     TASK_STATUS = "task_status"
     TASK_RESULT = "task_result"
-    
+
     # Capability messages
     CAPABILITY_UPDATE = "capability_update"
     CAPABILITY_QUERY = "capability_query"
-    
+
     # Load balancing messages
     LOAD_REPORT = "load_report"
     LOAD_QUERY = "load_query"
-    
+
     # Error messages
     ERROR = "error"
     WARNING = "warning"
@@ -35,9 +35,9 @@ class ProtocolMessageType(Enum):
 
 @dataclass
 class ProtocolMessage:
-    """
+    ###"""
     Standardized message format for agent communication.
-    """
+    ###"""
     message_id: str
     message_type: ProtocolMessageType
     sender: str
@@ -50,10 +50,10 @@ class ProtocolMessage:
 
 
 class CommunicationProtocol:
-    """
+    ###"""
     Implements the agent communication protocol.
     Manages message creation, serialization, and handling.
-    """
+    ###"""
 
     def __init__(self):
         self.logger = logging.getLogger("CommunicationProtocol")
@@ -68,9 +68,9 @@ class CommunicationProtocol:
                        payload: Dict[str, Any],
                        correlation_id: Optional[str] = None,
                        reply_to: Optional[str] = None) -> ProtocolMessage:
-        """
+        ###"""
         Create a new protocol message.
-        """
+        ###"""
         self.logger.debug(f"Creating message of type {message_type} from {sender} to {recipient}")
         return ProtocolMessage(
             message_id=str(uuid.uuid4()),
@@ -84,9 +84,9 @@ class CommunicationProtocol:
         )
 
     async def send_message(self, message: ProtocolMessage) -> Optional[ProtocolMessage]:
-        """
+        ###"""
         Send a message and optionally wait for a response if `reply_to` is set.
-        """
+        ###"""
         self.logger.info(f"Sending message {message.message_id} of type {message.message_type}")
         self._message_history[message.message_id] = message
 
@@ -113,9 +113,9 @@ class CommunicationProtocol:
         return None
 
     async def _handle_message(self, message: ProtocolMessage):
-        """
+        ###"""
         Handle an incoming message.
-        """
+        ###"""
         self.logger.debug(f"Handling message {message.message_id} of type {message.message_type}")
 
         # Check if the message has expired
@@ -148,18 +148,18 @@ class CommunicationProtocol:
                     await self.send_message(error_message)
 
     def register_handler(self, message_type: ProtocolMessageType, handler: Callable):
-        """
+        ###"""
         Register a handler for a specific message type.
-        """
+        ###"""
         self.logger.info(f"Registering handler for message type {message_type}")
         if message_type not in self._message_handlers:
             self._message_handlers[message_type] = []
         self._message_handlers[message_type].append(handler)
 
     def serialize_message(self, message: ProtocolMessage) -> str:
-        """
+        ###"""
         Serialize a message for transmission.
-        """
+        ###"""
         self.logger.debug(f"Serializing message {message.message_id}")
         return json.dumps({
             "message_id": message.message_id,
@@ -175,9 +175,9 @@ class CommunicationProtocol:
 
     @staticmethod
     def deserialize_message(data: str) -> ProtocolMessage:
-        """
+        ###"""
         Deserialize a received message.
-        """
+        ###"""
         try:
             msg_dict = json.loads(data)
             return ProtocolMessage(
@@ -194,3 +194,5 @@ class CommunicationProtocol:
         except (json.JSONDecodeError, KeyError) as e:
             logging.error(f"Failed to deserialize message: {str(e)}")
             raise ValueError("Invalid message format") from e
+
+

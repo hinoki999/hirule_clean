@@ -12,7 +12,7 @@ class HTTPAgent(BaseAgent):
         logging.info(f"Initialized HTTP agent: {agent_id}")
 
     async def process_request(self, request: dict) -> dict:
-        """Process an HTTP request"""
+        ###"""Process an HTTP request###"""
         try:
             logging.info(f"Processing HTTP request: {request}")
             # Basic request processing logic
@@ -31,11 +31,13 @@ class HTTPAgent(BaseAgent):
             }
 
     async def start(self):
-        """Start the HTTP agent"""
+        ###"""Start the HTTP agent###"""
         await super().start()
         logging.info(f"HTTP Agent {self.agent_id} started")
 
     async def stop(self):
-        """Stop the HTTP agent"""
+        ###"""Stop the HTTP agent###"""
         await super().stop()
         logging.info(f"HTTP Agent {self.agent_id} stopped")
+
+

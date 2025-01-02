@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 async def test_task_registration():
-    """Simulates task registration and logs the lifecycle."""
+    #"""Simulates task registration and logs the lifecycle.#"""
     try:
         # Initialize MasterCoordinator
         coordinator = MasterCoordinator(openai_api_key="your_openai_api_key")
@@ -46,4 +46,5 @@ async def test_task_registration():
 # Run the test
 if __name__ == "__main__":
     asyncio.run(test_task_registration())
+
 

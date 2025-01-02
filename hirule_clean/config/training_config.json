@@ -1,0 +1,13 @@
+﻿{
+    "messageBusPath": "./messaging/market_data",
+    "exchanges": {
+        "kraken": {
+            "symbols": ["XXBTZUSD", "XETHZUSD"],
+            "updateInterval": 500
+        }
+    },
+    "training": {
+        "defaultSessionDuration": 3600,
+        "maxConcurrentSessions": 5
+    }
+}

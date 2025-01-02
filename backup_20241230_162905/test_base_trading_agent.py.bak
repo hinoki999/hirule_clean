@@ -1,0 +1,153 @@
+# src/agents/trading/tests/test_base_trading_agent.py
+
+import pytest
+import asyncio
+from decimal import Decimal
+from datetime import datetime
+from typing import Dict, Any  # Added import
+from src.agents.trading.messages import (
+    Order,
+    OrderType,
+    OrderSide,
+    OrderStatus,
+    MarketData,
+    TradingMessageTypes
+)
+from src.agents.trading.smart_trading_thresholds import SmartTradingThresholds, SmartThresholdConfig
+import logging
+
+# Configure logging for tests
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+class TestTradingAgent:
+    """Concrete implementation of a Trading Agent for testing purposes."""
+
+    async def setup_agent(self):
+        """Initialize the test agent."""
+        # Initialize necessary attributes
+        self.positions = {}
+        self.orders = {}
+        self.balances = {}
+        self.latest_prices = {}
+        self.trade_history = []
+        self.trading_thresholds = SmartTradingThresholds()
+        logger.debug("[TEST_AGENT] Agent setup completed.")
+
+    async def cleanup_agent(self):
+        """Cleanup resources after tests."""
+        # Perform cleanup tasks if necessary
+        self.positions.clear()
+        self.orders.clear()
+        self.balances.clear()
+        self.latest_prices.clear()
+        self.trade_history.clear()
+        logger.debug("[TEST_AGENT] Agent cleanup completed.")
+
+    async def process_message(self, message):
+        """Process incoming trading messages."""
+        if message.get("type") == TradingMessageTypes.MARKET_DATA:
+            await self._handle_market_data(message)
+        elif message.get("type") == TradingMessageTypes.ORDER_UPDATE:
+            await self._handle_order_update(message)
+        elif message.get("type") == TradingMessageTypes.ORDER_FILL:
+            await self._handle_order_fill(message)
+        else:
+            logger.warning(f"[TEST_AGENT] Unrecognized message type: {message.get('type')}")
+
+    async def _handle_market_data(self, message):
+        """Handle market data messages."""
+        payload = message.get("payload", {})
+        symbol = payload.get("symbol")
+        last_price = payload.get("last_price")
+        volume = payload.get("volume", 1000.0)  # Default volume if not provided
+        cost = payload.get("cost", 0.001)      # Default cost if not provided
+        timestamp = payload.get("timestamp", datetime.now())
+
+        # Update latest prices
+        self.latest_prices[symbol] = last_price
+
+        # Update trading thresholds with new market data
+        trade_size = Decimal("1.0")  # Example trade size
+        base_price = last_price
+
+        self.trading_thresholds.update_market_data(
+            symbol=symbol,
+            price=last_price,
+            volume=volume,
+            current_vol=volume,  # Assuming current_vol is same as volume for simplicity
+            trade_cost=cost,
+            timestamp=timestamp
+        )
+        logger.debug(f"[TEST_AGENT] Market data updated for symbol: {symbol}")
+
+    async def _handle_order_update(self, message):
+        """Handle order update messages."""
+        payload = message.get("payload", {})
+        order_id = payload.get("order_id")
+        status = payload.get("status")
+
+        if order_id in self.orders:
+            self.orders[order_id]["status"] = status
+            logger.debug(f"[TEST_AGENT] Order {order_id} status updated to {status}.")
+        else:
+            logger.warning(f"[TEST_AGENT] Received update for unknown order ID: {order_id}.")
+
+    async def _handle_order_fill(self, message):
+        """Handle order fill messages."""
+        payload = message.get("payload", {})
+        order_id = payload.get("order_id")
+        filled_quantity = payload.get("filled_quantity", Decimal("0.0"))
+
+        if order_id in self.orders:
+            self.orders[order_id]["filled_quantity"] += filled_quantity
+            self.orders[order_id]["status"] = OrderStatus.FILLED
+            self.positions[self.orders[order_id]["symbol"]] = self.positions.get(self.orders[order_id]["symbol"], Decimal("0.0")) + filled_quantity
+            logger.debug(f"[TEST_AGENT] Order {order_id} filled with quantity {filled_quantity}.")
+        else:
+            logger.warning(f"[TEST_AGENT] Received fill for unknown order ID: {order_id}.")
+
+    async def place_order(self, order: Order):
+        """Simulate placing an order."""
+        self.orders[order.order_id] = {
+            "symbol": order.symbol,
+            "side": order.side,
+            "order_type": order.order_type,
+            "quantity": order.quantity,
+            "status": order.status,
+            "filled_quantity": Decimal("0.0")
+        }
+        logger.debug(f"[TEST_AGENT] Placed order: {order.order_id} for {order.symbol}")
+
+    async def get_system_health(self, symbol: str) -> Dict[str, Any]:
+        """Retrieve system health metrics for a given symbol."""
+        return self.trading_thresholds.get_system_health(symbol)
+
+# Pytest Fixture for TestTradingAgent
+
+@pytest.fixture
+async def trading_agent():
+    """Fixture to create and initialize a TestTradingAgent instance."""
+    agent = TestTradingAgent()
+    await agent.setup_agent()
+    yield agent
+    await agent.cleanup_agent()
+
+# Example Test Functions
+
+@pytest.mark.asyncio
+async def test_agent_initialization(trading_agent):
+    """Test basic agent initialization."""
+    assert isinstance(trading_agent, TestTradingAgent)
+    assert hasattr(trading_agent, "positions")
+    assert trading_agent.positions == {}
+    assert hasattr(trading_agent, "orders")
+    assert trading_agent.orders == {}
+    assert hasattr(trading_agent, "balances")
+    assert trading_agent.balances == {}
+    assert hasattr(trading_agent, "latest_prices")
+    assert trading_agent.latest_prices == {}
+    assert hasattr(trading_agent, "trade_history")
+    assert trading_agent.trade_history == {}
+    assert hasattr(trading_agent, "trading_thresholds")
+    assert isinstance(trading_agent.trading_thresholds, SmartTradingThresholds)

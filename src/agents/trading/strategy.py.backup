@@ -1,0 +1,66 @@
+from abc import ABC, abstractmethod
+from decimal import Decimal
+from typing import Dict, List, Optional
+from datetime import datetime
+from .messages import Order, OrderType, OrderSide, OrderStatus, MarketData
+from .risk_management import RiskManager, RiskLimits
+
+class TradingStrategy(ABC):
+    ###"""Base class for trading strategies###"""
+
+    def __init__(self,
+                 symbols: List[str],
+                 risk_manager: RiskManager,
+                 position_size: Decimal = Decimal("0.1")):
+        self.symbols = symbols
+        self.risk_manager = risk_manager
+        self.position_size = position_size
+        self.positions: Dict[str, Decimal] = {symbol: Decimal("0") for symbol in symbols}
+        self.market_data: Dict[str, MarketData] = {}
+        self.active_orders: Dict[str, Order] = {}
+
+    @abstractmethod
+    async def on_market_data(self, data: MarketData) -> Optional[Order]:
+        ###"""Process new market data and generate trading signals###"""
+        pass
+
+    @abstractmethod
+    async def on_order_fill(self, order: Order):
+        ###"""Handle order fills and update strategy state###"""
+        pass
+
+    async def execute_signal(self, symbol: str, signal: float, current_price: float) -> Optional[Order]:
+        ###"""Execute a trading signal###"""
+        # Skip if no clear signal
+        if abs(signal) < 0.1:
+            return None
+
+        # Determine order side
+        side = OrderSide.BUY if signal > 0 else OrderSide.SELL
+
+        # Calculate order size (could be position-size scaled by signal strength)
+        quantity = self.position_size * Decimal(str(abs(signal)))
+
+        # Check risk limits
+        can_trade, reason = self.risk_manager.can_place_order(symbol, quantity, current_price)
+        if not can_trade:
+            return None
+
+        # Create order
+        return Order(
+            order_id=f"{self.__class__.__name__}-{datetime.now().timestamp()}",
+            symbol=symbol,
+            side=side,
+            order_type=OrderType.MARKET,
+            quantity=quantity,
+            price=None,  # Market order
+            status=OrderStatus.NEW
+        )
+
+    def update_market_data(self, data: MarketData):
+        ###"""Update strategy market data###"""
+        self.market_data[data.symbol] = data
+
+    def update_position(self, symbol: str, quantity: Decimal):
+        ###"""Update strategy position tracking###"""
+        self.positions[symbol] = self.positions.get(symbol, Decimal("0")) + quantity

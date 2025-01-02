@@ -1,0 +1,136 @@
+# test_market_regime.py
+
+import pytest
+from src.agents.trading.tests.conftest import trading_agent
+from decimal import Decimal
+from src.agents.trading.market_regime import MarketState
+from datetime import datetime
+
+@pytest.mark.asyncio
+async def test_initial_state(trading_agent):
+    """Test the initial state of the market regime detector."""
+    health = await trading_agent.get_system_health("BTC/USD")
+    assert health["health_status"] == "Good", "Initial health status should be 'Good'."
+    assert health["circuit_breaker_active"] == False, "Circuit breaker should be inactive initially."
+    assert health["regime_confidence"] == 0.5, "Initial regime confidence should be 0.5."
+    assert "last_update" in health, "Health metrics should include 'last_update'."
+
+@pytest.mark.asyncio
+async def test_volatility_regime_detection(trading_agent):
+    """Test volatility regime detection."""
+    # Simulate enough market data to trigger regime detection
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": "BTC/USD",
+                "last_price": 50000.0,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+    regime = trading_agent.trading_thresholds.regime_detector.detect_regime("BTC/USD")
+    assert regime is not None, "Regime should not be None after sufficient data."
+    assert hasattr(regime, 'volatility_regime'), "Regime should have 'volatility_regime' attribute."
+    assert hasattr(regime, 'liquidity_state'), "Regime should have 'liquidity_state' attribute."
+    assert hasattr(regime, 'trend_strength'), "Regime should have 'trend_strength' attribute."
+    assert hasattr(regime, 'mean_reversion_score'), "Regime should have 'mean_reversion_score' attribute."
+
+@pytest.mark.asyncio
+async def test_liquidity_detection(trading_agent):
+    """Test liquidity state detection."""
+    # Assuming liquidity state is determined by some logic
+    # For now, just check that it's present
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": "BTC/USD",
+                "last_price": 50000.0,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+    regime = trading_agent.trading_thresholds.regime_detector.detect_regime("BTC/USD")
+    assert regime.liquidity_state in ["good", "scarce"], "Liquidity state should be either 'good' or 'scarce'."
+
+@pytest.mark.asyncio
+async def test_trend_strength_detection(trading_agent):
+    """Test trend strength detection."""
+    # After updating market data, check trend_strength
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": "BTC/USD",
+                "last_price": 50000.0,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+    regime = trading_agent.trading_thresholds.regime_detector.detect_regime("BTC/USD")
+    assert regime.trend_strength is not None, "Trend strength should not be None."
+    assert 0.0 <= regime.trend_strength <= 1.0, "Trend strength should be between 0.0 and 1.0."
+
+@pytest.mark.asyncio
+async def test_mean_reversion_detection(trading_agent):
+    """Test mean reversion score detection."""
+    # After updating market data, check mean_reversion_score
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": "BTC/USD",
+                "last_price": 50000.0,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+    regime = trading_agent.trading_thresholds.regime_detector.detect_regime("BTC/USD")
+    assert regime.mean_reversion_score is not None, "Mean reversion score should not be None."
+    assert 0.0 <= regime.mean_reversion_score <= 1.0, "Mean reversion score should be between 0.0 and 1.0."
+
+@pytest.mark.asyncio
+async def test_regime_confidence(trading_agent):
+    """Test regime confidence calculation."""
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": "BTC/USD",
+                "last_price": 50000.0,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+    confidence = trading_agent.trading_thresholds.regime_detector.get_regime_confidence("BTC/USD")
+    assert confidence in [0.5, 0.7, 0.9], "Regime confidence should be one of [0.5, 0.7, 0.9]."
+
+@pytest.mark.asyncio
+async def test_multiple_symbols(trading_agent):
+    """Test handling multiple symbols."""
+    symbols = ["BTC/USD", "ETH/USD"]
+    for symbol in symbols:
+        for _ in range(25):
+            await trading_agent.process_message({
+                "type": "MARKET_DATA",
+                "payload": {
+                    "symbol": symbol,
+                    "last_price": 50000.0,
+                    "volume": 1000.0,
+                    "cost": 0.001,
+                    "timestamp": datetime.now()
+                }
+            })
+    for symbol in symbols:
+        regime = trading_agent.trading_thresholds.regime_detector.detect_regime(symbol)
+        assert regime is not None, f"Regime for symbol {symbol} should not be None after sufficient data."
+        assert hasattr(regime, 'volatility_regime'), f"Regime for symbol {symbol} should have 'volatility_regime' attribute."
+        assert hasattr(regime, 'liquidity_state'), f"Regime for symbol {symbol} should have 'liquidity_state' attribute."
+        assert hasattr(regime, 'trend_strength'), f"Regime for symbol {symbol} should have 'trend_strength' attribute."
+        assert hasattr(regime, 'mean_reversion_score'), f"Regime for symbol {symbol} should have 'mean_reversion_score' attribute."

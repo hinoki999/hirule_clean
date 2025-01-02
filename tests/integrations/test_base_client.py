@@ -4,8 +4,8 @@ import aiohttp
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from src.integrations.base import (
-    BaseAPIClient, 
-    APIConfig, 
+    BaseAPIClient,
+    APIConfig,
     RateLimitError,
     AuthenticationError,
     ServerError
@@ -34,3 +34,5 @@ async def cleanup_sessions():
     await asyncio.sleep(0)  # Allow any pending tasks to complete
 
 # Rest of TestBaseAPIClient remains the same...
+
+

@@ -1,0 +1,35 @@
+from enum import Enum
+from dataclasses import dataclass
+from typing import Any
+from decimal import Decimal
+
+class TradingMessageTypes(Enum):
+    MARKET_DATA = "MARKET_DATA"
+    ORDER_NEW = "ORDER_NEW"
+    ORDER_CANCEL = "ORDER_CANCEL"
+    ORDER_UPDATE = "ORDER_UPDATE"
+    ORDER_FILL = "ORDER_FILL"
+    BALANCE_UPDATE = "BALANCE_UPDATE"
+
+@dataclass
+class MarketData:
+    symbol: str
+    last_price: float
+    volume: float
+    cost: float
+    timestamp: str  # ISO formatted datetime string
+
+@dataclass
+class Order:
+    order_id: str
+    symbol: str
+    side: str       # "BUY" or "SELL"
+    quantity: Decimal
+    price: float
+    status: 'OrderStatus'
+    filled_quantity: Decimal = Decimal("0")
+
+class OrderStatus(Enum):
+    PENDING = "PENDING"
+    FILLED = "FILLED"
+    CANCELLED = "CANCELLED"

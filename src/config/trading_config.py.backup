@@ -1,0 +1,11 @@
+from dataclasses import dataclass
+
+@dataclass
+class TradingConfig:
+    """
+    Configuration parameters for the trading agent.
+    """
+    vol_window: int = 20           # Number of data points to calculate average volatility
+    base_cost_threshold: float = 0.001  # Base threshold for trading costs
+    max_cost_threshold: float = 0.01    # Maximum cap for adaptive thresholds
+    size_scaling_factor: float = 0.1    # Factor to scale trade size impact

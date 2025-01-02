@@ -26,7 +26,7 @@ class Message:
     recipient_id: Optional[str]
     message_type: str
     content: Dict[str, Any]
-    
+
     # Optional fields with defaults
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
     priority: MessagePriority = field(default=MessagePriority.NORMAL)
@@ -54,3 +54,5 @@ class Message:
             'timestamp': datetime.now(UTC),
             'details': details
         })
+
+

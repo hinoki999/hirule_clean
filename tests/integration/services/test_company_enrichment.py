@@ -15,14 +15,14 @@ async def enrichment_service(mock_session):
 class TestCompanyEnrichmentService:
     @pytest.mark.asyncio
     async def test_successful_enrichment(self, enrichment_service, mock_session):
-        """Test successful enrichment with both services"""
+        #"""Test successful enrichment with both services#"""
         # Mock Clearbit response
         clearbit_data = {
             "name": "Test Company",
             "domain": "test.com",
             "metrics": {"employees": 100}
         }
-        
+
         # Mock Hunter response
         hunter_data = {
             "data": {
@@ -61,7 +61,7 @@ class TestCompanyEnrichmentService:
 
     @pytest.mark.asyncio
     async def test_clearbit_not_found(self, enrichment_service, mock_session):
-        """Test behavior when Clearbit doesn't find the company"""
+        #"""Test behavior when Clearbit doesn't find the company#"""
         mock_response = MagicMock()
         mock_response.status = 404
         mock_session.request = AsyncMock(return_value=mock_response)
@@ -74,7 +74,7 @@ class TestCompanyEnrichmentService:
 
     @pytest.mark.asyncio
     async def test_hunter_not_found(self, enrichment_service, mock_session):
-        """Test behavior when Hunter doesn't find email patterns"""
+        #"""Test behavior when Hunter doesn't find email patterns#"""
         # Mock successful Clearbit response
         clearbit_data = {"name": "Test Company"}
         mock_clearbit_response = MagicMock()
@@ -99,3 +99,5 @@ class TestCompanyEnrichmentService:
         assert result.email_patterns is None
         assert result.key_contacts is None
         assert result.error is None
+
+

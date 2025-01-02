@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: trading_system
+Version: 0.1
+Requires-Dist: numpy
+Requires-Dist: pytest
+Requires-Dist: pytest-asyncio

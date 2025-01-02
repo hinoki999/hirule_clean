@@ -8,8 +8,8 @@ from src.agents.base import BaseAgent
 from src.core.config import Config
 from src.core.messaging import MessageBus
 class MessageHandler:
-    """Base class for message handlers."""
-    
+    ###"""Base class for message handlers.###"""
+
     def __init__(self, agent: BaseAgent):
         self.agent = agent
         self.logger = logging.getLogger(f"{agent.agent_id}_handler")
@@ -17,18 +17,18 @@ class MessageHandler:
         self.setup_handlers()
 
     def setup_handlers(self):
-        """Setup message type handlers."""
+        ###"""Setup message type handlers.###"""
         self.register_handler(ProtocolMessageType.HEARTBEAT, self.handle_heartbeat)
         self.register_handler(ProtocolMessageType.ERROR, self.handle_error)
 
-    def register_handler(self, 
-                        message_type: ProtocolMessageType, 
+    def register_handler(self,
+                        message_type: ProtocolMessageType,
                         handler: Callable[[ProtocolMessage], Awaitable[None]]):
-        """Register a handler for a message type."""
+        ###"""Register a handler for a message type.###"""
         self._handlers[message_type] = handler
 
     async def handle_message(self, message: ProtocolMessage):
-        """Handle incoming message."""
+        ###"""Handle incoming message.###"""
         try:
             if message.message_type in self._handlers:
                 await self._handlers[message.message_type](message)
@@ -39,30 +39,30 @@ class MessageHandler:
             await self.handle_error(message, str(e))
 
     async def handle_heartbeat(self, message: ProtocolMessage):
-        """Handle heartbeat messages."""
+        ###"""Handle heartbeat messages.###"""
         pass  # Default implementation
 
     async def handle_error(self, message: ProtocolMessage, error: str = None):
-        """Handle error messages."""
+        ###"""Handle error messages.###"""
         self.logger.error(f"Error in message {message.message_id}: {error or message.payload.get('error')}")
 
 class TaskAgentHandler(MessageHandler):
-    """Handler for task-executing agents."""
-    
+    ###"""Handler for task-executing agents.###"""
+
     def setup_handlers(self):
         super().setup_handlers()
         self.register_handler(ProtocolMessageType.TASK_ASSIGNMENT, self.handle_task_assignment)
         self.register_handler(ProtocolMessageType.TASK_REQUEST, self.handle_task_request)
 
     async def handle_task_assignment(self, message: ProtocolMessage):
-        """Handle new task assignments."""
+        ###"""Handle new task assignments.###"""
         task_info = message.payload
         task_id = task_info["task_id"]
-        
+
         try:
             # Update agent's task queue
             await self.agent.add_task(task_id, task_info)
-            
+
             # Acknowledge receipt
             response = self.agent.protocol.create_message(
                 message_type=ProtocolMessageType.TASK_STATUS,
@@ -75,7 +75,7 @@ class TaskAgentHandler(MessageHandler):
                 correlation_id=message.message_id
             )
             await self.agent.protocol.send_message(response)
-            
+
         except Exception as e:
             # Report failure
             error_response = self.agent.protocol.create_message(
@@ -91,20 +91,20 @@ class TaskAgentHandler(MessageHandler):
             await self.agent.protocol.send_message(error_response)
 
     async def handle_task_request(self, message: ProtocolMessage):
-        """Handle task requests."""
+        ###"""Handle task requests.###"""
         # Implement based on agent capabilities
         pass
 
 class ProtocolAgentHandler(MessageHandler):
-    """Handler for protocol-translating agents."""
-    
+    ###"""Handler for protocol-translating agents.###"""
+
     def setup_handlers(self):
         super().setup_handlers()
         self.register_handler(ProtocolMessageType.CAPABILITY_QUERY, self.handle_capability_query)
         self.register_handler(ProtocolMessageType.PROTOCOL_TRANSLATION, self.handle_protocol_translation)
 
     async def handle_capability_query(self, message: ProtocolMessage):
-        """Handle capability queries."""
+        ###"""Handle capability queries.###"""
         response = self.agent.protocol.create_message(
             message_type=ProtocolMessageType.CAPABILITY_UPDATE,
             sender=self.agent.agent_id,
@@ -117,6 +117,8 @@ class ProtocolAgentHandler(MessageHandler):
         await self.agent.protocol.send_message(response)
 
     async def handle_protocol_translation(self, message: ProtocolMessage):
-        """Handle protocol translation requests."""
+        ###"""Handle protocol translation requests.###"""
         # Implement protocol translation logic
         pass
+
+

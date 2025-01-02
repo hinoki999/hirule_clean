@@ -1,0 +1,14 @@
+﻿1. Message Bus Integration:
+   - Replace direct method calls with message bus events
+   - Add message handlers for market data
+   - Implement proper event publishing
+
+2. Agent Framework Alignment:
+   - Add capability registration
+   - Implement task management hooks
+   - Add system monitoring integration
+   
+3. Testing Infrastructure:
+   - Extend existing test patterns
+   - Add message bus mocks
+   - Implement capability tests

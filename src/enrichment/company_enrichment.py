@@ -1,11 +1,11 @@
 from typing import Dict, Optional, List
 from dataclasses import dataclass
-from src.integrations.clearbit import ClearbitClient, ClearbitNotFoundError 
+from src.integrations.clearbit import ClearbitClient, ClearbitNotFoundError
 from src.integrations.hunter import HunterClient, HunterNotFoundError
 
 @dataclass
 class EnrichmentResult:
-    """Data class for enrichment results"""
+    ###"""Data class for enrichment results###"""
     company_info: Optional[Dict] = None
     email_patterns: Optional[List[Dict]] = None
     key_contacts: Optional[List[Dict]] = None
@@ -26,15 +26,15 @@ class CompanyEnrichmentService:
         await self.hunter_client.__aexit__(exc_type, exc, tb)
 
     async def enrich_company(self, domain: str) -> EnrichmentResult:
-        """
+        ###"""
         Enrich company information using both Clearbit and Hunter.io
-        
+
         Args:
             domain: Company domain name
-            
+
         Returns:
             EnrichmentResult containing company info and email data
-        """
+        ###"""
         result = EnrichmentResult()
 
         try:
@@ -60,3 +60,5 @@ class CompanyEnrichmentService:
             result.error = f"Error finding email patterns: {str(e)}"
 
         return result
+
+

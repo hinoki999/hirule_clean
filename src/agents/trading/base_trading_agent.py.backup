@@ -1,0 +1,24 @@
+from src.agents.BaseAgent import BaseAgent
+from decimal import Decimal
+from typing import Dict, Optional
+import asyncio
+import logging
+
+class BaseTradingAgent(BaseAgent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.positions: Dict[str, Decimal] = {}
+        self.orders: Dict[str, Dict] = {}
+        self.balances: Dict[str, Decimal] = {}
+        self.latest_prices: Dict[str, Dict] = {}
+
+    async def setup(self):
+        await self._initialize_trading_state()
+
+    async def _initialize_trading_state(self):
+        if not isinstance(self.positions, dict):
+            self.positions = {}
+        if not isinstance(self.orders, dict):
+            self.orders = {}
+        if not isinstance(self.balances, dict):
+            self.balances = {}

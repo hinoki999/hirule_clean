@@ -17,8 +17,8 @@ class ValidationResult:
     enriched_data: Optional[Dict[str, Any]] = None
 
 class LeadValidator:
-    """Handles validation of lead data with detailed error reporting."""
-    
+    ###"""Handles validation of lead data with detailed error reporting.###"""
+
     def __init__(self):
         self.email_pattern = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
         self.url_pattern = re.compile(
@@ -34,13 +34,13 @@ class LeadValidator:
         errors = []
         warnings = []
         info = []
-        
+
         # Required fields validation
         if not lead_data.get("company_name"):
             errors.append("Company name is required")
         elif len(lead_data["company_name"].strip()) < 2:
             errors.append("Company name must be at least 2 characters long")
-            
+
         # Email validation
         if "contact_email" in lead_data:
             email = lead_data.get("contact_email")
@@ -51,7 +51,7 @@ class LeadValidator:
                 warnings.append("Email field is empty")
         else:
             info.append("No email provided")
-            
+
         # Website validation
         if "website" in lead_data:
             website = lead_data.get("website")
@@ -62,14 +62,14 @@ class LeadValidator:
                 warnings.append("Website field is empty")
         else:
             info.append("No website provided")
-            
+
         # Additional data quality checks
         if "company_name" in lead_data:
             if lead_data["company_name"].isupper():
                 warnings.append("Company name is all uppercase")
             if len(lead_data["company_name"]) > 100:
                 warnings.append("Company name is unusually long")
-                
+
         return ValidationResult(
             is_valid=len(errors) == 0,
             errors=errors,
@@ -77,3 +77,5 @@ class LeadValidator:
             info=info,
             enriched_data=lead_data if len(errors) == 0 else None
         )
+
+

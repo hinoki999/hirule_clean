@@ -1,0 +1,230 @@
+from enum import Enum
+from typing import Optional, Dict, Any
+from hubspot import HubSpot
+from hubspot.crm.companies import ApiException
+import redis
+import logging
+import asyncio
+from datetime import datetime, timedelta
+import json
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class RateLimitTier(Enum):
+    FREE = "free"
+    BASIC = "basic"
+    PREMIUM = "premium"
+    ENTERPRISE = "enterprise"
+
+class RateLimitConfig:
+    """Rate limit configuration per tier"""
+    LIMITS = {
+        RateLimitTier.FREE: {"requests_per_minute": 10, "burst": 15},
+        RateLimitTier.BASIC: {"requests_per_minute": 30, "burst": 45},
+        RateLimitTier.PREMIUM: {"requests_per_minute": 100, "burst": 150},
+        RateLimitTier.ENTERPRISE: {"requests_per_minute": 300, "burst": 450}
+    }
+
+class HubSpotError(Exception):
+    """Custom exception for HubSpot-related errors"""
+    pass
+
+class HubSpotClient:
+    def __init__(
+        self,
+        access_token: str,
+        rate_limit_tier: RateLimitTier,
+        redis_url: str = "redis://localhost:6379/0",
+        cache_ttl: int = 3600  # 1 hour cache by default
+    ):
+        self.client = HubSpot(access_token=access_token)
+        self.rate_limit_tier = rate_limit_tier
+        self.redis_client = redis.from_url(redis_url)
+        self.cache_ttl = cache_ttl
+        self.rate_limit_config = RateLimitConfig.LIMITS[rate_limit_tier]
+        
+    async def _check_rate_limit(self, key_prefix: str = "hubspot") -> bool:
+        """
+        Check if the request is within rate limits
+        Returns True if request can proceed, False if rate limited
+        """
+        key = f"{key_prefix}:{self.rate_limit_tier.value}:{datetime.now().minute}"
+        try:
+            current = int(self.redis_client.get(key) or 0)
+            if current >= self.rate_limit_config["requests_per_minute"]:
+                logger.warning(f"Rate limit exceeded for tier {self.rate_limit_tier.value}")
+                return False
+            
+            # Increment counter and set expiry if not exists
+            pipeline = self.redis_client.pipeline()
+            pipeline.incr(key)
+            pipeline.expire(key, 60)  # Expire after 1 minute
+            pipeline.execute()
+            return True
+            
+        except redis.RedisError as e:
+            logger.error(f"Redis error in rate limiting: {str(e)}")
+            # Fail open - allow request if Redis is down
+            return True
+
+    def _get_cache_key(self, domain: str) -> str:
+        """Generate cache key for company data"""
+        return f"hubspot:company:{domain}"
+
+    async def get_company_data(self, domain: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve company data from HubSpot with rate limiting and caching
+        """
+        cache_key = self._get_cache_key(domain)
+        
+        # Check cache first
+        try:
+            cached_data = self.redis_client.get(cache_key)
+            if cached_data:
+                return json.loads(cached_data)
+        except redis.RedisError as e:
+            logger.warning(f"Redis cache error: {str(e)}")
+        
+        # Check rate limit before making API call
+        if not await self._check_rate_limit():
+            raise HubSpotError("Rate limit exceeded")
+        
+        try:
+            # Search for company by domain
+            filter_groups = [{
+                "filters": [{
+                    "propertyName": "domain",
+                    "operator": "EQ",
+                    "value": domain
+                }]
+            }]
+            
+            properties = [
+                "name", "domain", "website", "industry", 
+                "description", "phone", "address"
+            ]
+            
+            companies = self.client.crm.companies.search_api.do_search({
+                "filterGroups": filter_groups,
+                "properties": properties,
+                "limit": 1
+            })
+            
+            if companies.results:
+                company_data = {
+                    "id": companies.results[0].id,
+                    "properties": companies.results[0].properties,
+                    "created_at": companies.results[0].created_at,
+                    "updated_at": companies.results[0].updated_at
+                }
+                
+                # Cache the result
+                try:
+                    self.redis_client.setex(
+                        cache_key,
+                        self.cache_ttl,
+                        json.dumps(company_data)
+                    )
+                except redis.RedisError as e:
+                    logger.warning(f"Redis caching error: {str(e)}")
+                
+                return company_data
+            
+            return None
+            
+        except ApiException as e:
+            logger.error(f"HubSpot API error: {str(e)}")
+            raise HubSpotError(f"HubSpot API error: {str(e)}")
+        
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise HubSpotError(f"Unexpected error: {str(e)}")
+
+    async def create_company(
+        self,
+        name: str,
+        domain: str,
+        properties: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Create a new company in HubSpot with rate limiting
+        """
+        if not await self._check_rate_limit():
+            raise HubSpotError("Rate limit exceeded")
+            
+        try:
+            company_properties = {
+                "name": name,
+                "domain": domain,
+                **(properties or {})
+            }
+            
+            company = self.client.crm.companies.basic_api.create(
+                simple_public_object_input={
+                    "properties": company_properties
+                }
+            )
+            
+            # Invalidate cache for this domain
+            try:
+                self.redis_client.delete(self._get_cache_key(domain))
+            except redis.RedisError as e:
+                logger.warning(f"Redis cache invalidation error: {str(e)}")
+            
+            return {
+                "id": company.id,
+                "properties": company.properties,
+                "created_at": company.created_at,
+                "updated_at": company.updated_at
+            }
+            
+        except ApiException as e:
+            logger.error(f"HubSpot API error: {str(e)}")
+            raise HubSpotError(f"HubSpot API error: {str(e)}")
+        
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise HubSpotError(f"Unexpected error: {str(e)}")
+
+    async def update_company(
+        self,
+        company_id: str,
+        properties: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Update an existing company in HubSpot with rate limiting
+        """
+        if not await self._check_rate_limit():
+            raise HubSpotError("Rate limit exceeded")
+            
+        try:
+            company = self.client.crm.companies.basic_api.update(
+                company_id,
+                simple_public_object_input={
+                    "properties": properties
+                }
+            )
+            
+            # Invalidate cache if domain is in updated properties
+            if "domain" in properties:
+                try:
+                    self.redis_client.delete(self._get_cache_key(properties["domain"]))
+                except redis.RedisError as e:
+                    logger.warning(f"Redis cache invalidation error: {str(e)}")
+            
+            return {
+                "id": company.id,
+                "properties": company.properties,
+                "created_at": company.created_at,
+                "updated_at": company.updated_at
+            }
+            
+        except ApiException as e:
+            logger.error(f"HubSpot API error: {str(e)}")
+            raise HubSpotError(f"HubSpot API error: {str(e)}")
+        
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise HubSpotError(f"Unexpected error: {str(e)})")

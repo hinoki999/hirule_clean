@@ -10,7 +10,7 @@ class BlockchainCoordinator(BaseAgent):
         if not agent_id:
             agent_id = f"blockchain_coordinator_{str(uuid4())[:8]}"
         super().__init__(agent_id=agent_id, capabilities=[AgentCapability.BLOCKCHAIN])
-        
+
         self.blockchain_agents = {}
         self.task_queue = asyncio.Queue()
         self.is_running = False
@@ -18,7 +18,7 @@ class BlockchainCoordinator(BaseAgent):
         logging.info(f"Initializing Blockchain Coordinator: {agent_id}")
 
     def register_agent(self, agent):
-        """Register a blockchain agent with the coordinator"""
+        ###"""Register a blockchain agent with the coordinator###"""
         if agent.agent_id in self.blockchain_agents:
             logging.warning(f"Agent {agent.agent_id} already registered")
             return False
@@ -27,7 +27,7 @@ class BlockchainCoordinator(BaseAgent):
         return True
 
     async def submit_task(self, task: dict) -> str:
-        """Submit a blockchain task for processing"""
+        ###"""Submit a blockchain task for processing###"""
         task_id = str(uuid4())
         task['task_id'] = task_id
         await self.task_queue.put(task)
@@ -53,7 +53,7 @@ class BlockchainCoordinator(BaseAgent):
         logging.info(f"Blockchain Coordinator {self.agent_id} stopped")
 
     async def _process_tasks(self):
-        """Process tasks from the queue"""
+        ###"""Process tasks from the queue###"""
         while self.is_running:
             try:
                 try:
@@ -62,7 +62,7 @@ class BlockchainCoordinator(BaseAgent):
                     continue
 
                 logging.info(f"Processing blockchain task: {task['task_id']}")
-                
+
                 if self.blockchain_agents:
                     # Here we'd implement more sophisticated agent selection based on task type
                     selected_agent = await self._select_agent_for_task(task)
@@ -76,21 +76,23 @@ class BlockchainCoordinator(BaseAgent):
                         logging.warning(f"No suitable agent found for task {task['task_id']}")
                 else:
                     logging.warning(f"No agents available to process task {task['task_id']}")
-                
+
                 self.task_queue.task_done()
-                    
+
             except Exception as e:
                 logging.error(f"Error in task processing loop: {str(e)}")
                 await asyncio.sleep(0.1)
 
     async def _select_agent_for_task(self, task: dict):
-        """Select the most appropriate agent for a given task"""
+        ###"""Select the most appropriate agent for a given task###"""
         if not self.blockchain_agents:
             return None
 
         # Get task type and requirements
         task_type = task.get('type', 'general')
-        
+
         # For now, simple selection - just get first available agent
         # In a real implementation, this would match task requirements with agent capabilities
         return list(self.blockchain_agents.values())[0]
+
+

@@ -1,0 +1,110 @@
+from typing import List, Dict, Optional
+from dataclasses import dataclass
+import numpy as np
+import asyncio
+import logging
+
+from src.config.trading_config import TradingConfig
+
+@dataclass
+class MarketState:
+    volatility_regime: str   # "high", "normal", "low"
+    liquidity_state: str     # e.g., "good", "average", "poor"
+    trend_strength: float
+    mean_reversion_score: float
+
+class MarketRegimeDetector:
+    """
+    Detects the current market regime based on historical volatility data.
+    """
+
+    def __init__(self, config: TradingConfig):
+        self.config = config
+        self.min_data_points = config.vol_window
+        self.historical_vols: Dict[str, List[float]] = {}
+        self.volatility_regimes: Dict[str, str] = {}
+        self.confidence_scores: Dict[str, float] = {}
+        self.current_regimes: Dict[str, MarketState] = {}
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.lock = asyncio.Lock()
+
+    async def initialize(self):
+        """Initialize any necessary state or connections."""
+        self.logger.debug("MarketRegimeDetector initialized.")
+
+    async def update_market_data(self, market_data):
+        """
+        Updates historical volatility data based on incoming market data.
+        """
+        async with self.lock:
+            symbol = market_data.symbol
+            if symbol not in self.historical_vols:
+                self.historical_vols[symbol] = []
+                self.logger.debug(f"[MARKET_REGIME_DETECTOR] Initialized volatility data for symbol: {symbol}")
+
+            # For simplicity, using volume as a proxy for volatility
+            self.historical_vols[symbol].append(market_data.volume)
+            if len(self.historical_vols[symbol]) > self.min_data_points:
+                self.historical_vols[symbol] = self.historical_vols[symbol][-self.min_data_points:]
+                self._update_regime(symbol)
+
+            self.logger.debug(f"[MARKET_REGIME_DETECTOR] Updated volatility data for symbol: {symbol}")
+
+    def detect_regime(self, symbol: str) -> Optional[MarketState]:
+        if symbol not in self.historical_vols or len(self.historical_vols[symbol]) < self.min_data_points:
+            self.logger.debug(f"[MARKET_REGIME_DETECTOR] Insufficient data to detect regime for symbol: {symbol}")
+            return None
+
+        recent_vol = np.mean(self.historical_vols[symbol][-5:])
+        hist_vol = np.mean(self.historical_vols[symbol])
+        vol_ratio = recent_vol / hist_vol if hist_vol > 0 else 1.0
+
+        self.logger.debug(f"[MARKET_REGIME_DETECTOR] Symbol: {symbol}, Recent Vol: {recent_vol}, Avg Vol: {hist_vol}, Vol Ratio: {vol_ratio}")
+
+        # Define volatility regimes
+        if vol_ratio > 1.2:
+            regime = "high"
+        elif vol_ratio < 0.8:
+            regime = "low"
+        else:
+            regime = "normal"
+
+        liquidity_state = "good"  # placeholder
+        trend_strength = float(np.random.uniform(0.0, 1.0))
+        mean_reversion_score = float(np.random.uniform(0.0, 1.0))
+
+        market_state = MarketState(
+            volatility_regime=regime,
+            liquidity_state=liquidity_state,
+            trend_strength=trend_strength,
+            mean_reversion_score=mean_reversion_score
+        )
+        self.current_regimes[symbol] = market_state
+        self.logger.debug(f"[MARKET_REGIME_DETECTOR] Detected regime for {symbol}: {market_state}")
+        return market_state
+
+    def get_regime_confidence(self, symbol: str) -> float:
+        regime = self.current_regimes.get(symbol)
+        if not regime:
+            self.logger.debug(f"[MARKET_REGIME_DETECTOR] No regime detected for symbol: {symbol}. Confidence: 0.0")
+            return 0.0
+
+        confidence_mapping = {
+            "high": 0.9,
+            "low": 0.7,
+            "normal": 0.5
+        }
+        confidence = confidence_mapping.get(regime.volatility_regime, 0.5)
+        self.logger.debug(f"[MARKET_REGIME_DETECTOR] Regime confidence for {symbol}: {confidence}")
+        return confidence
+
+    def _update_regime(self, symbol: str):
+        state = self.detect_regime(symbol)
+        if state:
+            confidence_mapping = {
+                "high": 0.9,
+                "normal": 0.5,
+                "low": 0.7
+            }
+            self.confidence_scores[symbol] = confidence_mapping.get(state.volatility_regime, 0.5)
+            self.logger.debug(f"[MARKET_REGIME_DETECTOR] Updated regime confidence for {symbol}: {self.confidence_scores[symbol]}")

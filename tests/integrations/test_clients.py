@@ -26,20 +26,22 @@ def mock_response():
             self.status = status
             self._json_data = json_data or {}
             self.headers = {}
-            
+
         async def json(self):
             return self._json_data
-            
+
         async def __aenter__(self):
             return self
-            
+
         async def __aexit__(self, exc_type, exc, tb):
             pass
-            
+
         def raise_for_status(self):
             if self.status >= 400:
                 raise aiohttp.ClientError(f"HTTP {self.status}")
-    
+
     return MockResponse  # Return the class, not an instance
 
 # Rest of the test code remains the same
+
+

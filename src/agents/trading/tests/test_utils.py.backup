@@ -1,0 +1,26 @@
+from decimal import Decimal
+from datetime import datetime
+from src.agents.trading.messages import MarketData, Order
+from src.agents.trading.risk_management import RiskLimits
+
+def create_market_data(symbol: str, price: float) -> MarketData:
+    ###"""Create test market data###"""
+    return MarketData(
+        symbol=symbol,
+        last_price=price,
+        timestamp=datetime.now(),
+        bid=price - 0.5,
+        ask=price + 0.5,
+        volume=1.0
+    )
+
+def create_risk_limits() -> RiskLimits:
+    ###"""Create standard test risk limits###"""
+    return RiskLimits(
+        max_position_size=Decimal("1.0"),
+        max_notional=Decimal("100000"),
+        max_drawdown=0.1,
+        position_limits={"BTC/USD": Decimal("2.0")},
+        max_leverage=3.0,
+        max_concentration=0.2
+    )

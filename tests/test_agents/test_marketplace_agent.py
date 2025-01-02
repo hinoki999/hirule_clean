@@ -37,10 +37,10 @@ async def test_agent_registration(marketplace_agent, sample_agent_data):
         message_type="REGISTER_AGENT",
         payload=sample_agent_data
     )
-    
+
     # Test registration
     await marketplace_agent._handle_agent_registration(message)
-    
+
     # Verify registration
     agents = await marketplace_agent.get_registered_agents()
     assert len(agents) == 1
@@ -57,7 +57,7 @@ async def test_agent_search(marketplace_agent, sample_agent_data):
         payload=sample_agent_data
     )
     await marketplace_agent._handle_agent_registration(reg_message)
-    
+
     # Search for agents
     search_message = Message(
         id="search-msg-1",
@@ -66,9 +66,11 @@ async def test_agent_search(marketplace_agent, sample_agent_data):
         message_type="SEARCH_AGENTS",
         payload={"category": "AI"}
     )
-    
+
     # Test search
     response = await marketplace_agent._handle_agent_search(search_message)
     assert response is not None
     assert len(response) >= 1
     assert response[0]["category"] == "AI"
+
+

@@ -17,3 +17,5 @@ class Alert:
     source: str
     metrics: Dict[str, Any]
     alert_id: str
+
+

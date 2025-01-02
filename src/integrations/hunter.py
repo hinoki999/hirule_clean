@@ -5,27 +5,27 @@ from .base import BaseAPIClient, APIConfig, APIError
 import asyncio
 
 class HunterError(APIError):
-    """Hunter-specific API error."""
+    ###"""Hunter-specific API error.###"""
     pass
 
 class HunterNotFoundError(HunterError):
-    """Raised when Hunter cannot find data for the given input."""
+    ###"""Raised when Hunter cannot find data for the given input.###"""
     pass
 
 class HunterInvalidError(HunterError):
-    """Raised when input data is invalid."""
+    ###"""Raised when input data is invalid.###"""
     pass
 
 class HunterClient(BaseAPIClient):
-    """Client for interacting with the Hunter.io API."""
+    ###"""Client for interacting with the Hunter.io API.###"""
 
     def __init__(self, api_key: str):
-        """
+        ###"""
         Initializes the HunterClient with the provided API key.
 
         Args:
             api_key (str): The API key for authenticating with the Hunter API.
-        """
+        ###"""
         config = APIConfig(
             api_key=api_key,
             base_url="https://api.hunter.io/v2",
@@ -36,7 +36,7 @@ class HunterClient(BaseAPIClient):
         super().__init__(config)
 
     async def _handle_response_error(self, response):
-        """Handle Hunter-specific error responses."""
+        ###"""Handle Hunter-specific error responses.###"""
         if response.status == 404:
             raise HunterNotFoundError("Resource not found", status_code=404)
         elif response.status == 400:
@@ -51,7 +51,7 @@ class HunterClient(BaseAPIClient):
         await super()._handle_response_error(response)
 
     async def domain_search(self, domain: str) -> Dict:
-        """
+        ###"""
         Search for email addresses associated with a domain.
 
         Args:
@@ -59,7 +59,7 @@ class HunterClient(BaseAPIClient):
 
         Returns:
             Dict: The response data containing emails.
-        """
+        ###"""
         try:
             params = {"domain": domain}
             return await self._request("GET", "/domain-search", params=params)
@@ -69,7 +69,7 @@ class HunterClient(BaseAPIClient):
             raise
 
     async def email_finder(self, domain: str, first_name: str, last_name: str) -> Dict:
-        """
+        ###"""
         Find an email address using domain and name.
 
         Args:
@@ -79,7 +79,7 @@ class HunterClient(BaseAPIClient):
 
         Returns:
             Dict: The response data containing the email and score.
-        """
+        ###"""
         try:
             params = {
                 "domain": domain,
@@ -93,7 +93,7 @@ class HunterClient(BaseAPIClient):
             raise
 
     async def email_verifier(self, email: str) -> Dict:
-        """
+        ###"""
         Verify the deliverability of an email address.
 
         Args:
@@ -101,7 +101,7 @@ class HunterClient(BaseAPIClient):
 
         Returns:
             Dict: The response data containing the verification status and score.
-        """
+        ###"""
         try:
             params = {"email": email}
             return await self._request("GET", "/email-verifier", params=params)
@@ -109,3 +109,5 @@ class HunterClient(BaseAPIClient):
             if isinstance(e, HunterInvalidError):
                 raise HunterInvalidError(f"Invalid email address: {email}") from e
             raise
+
+

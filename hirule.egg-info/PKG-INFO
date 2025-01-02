@@ -1,0 +1,5 @@
+Metadata-Version: 2.1
+Name: hirule
+Version: 0.1
+Requires-Dist: pytest
+Requires-Dist: pytest-asyncio

@@ -1,0 +1,122 @@
+from src.agents.base import BaseAgent, AgentCapability
+from src.agents.trading.messages import (
+    TradingMessageTypes, 
+    MarketData, 
+    Order,
+    OrderStatus
+)
+from decimal import Decimal
+from typing import Dict, Optional
+import asyncio
+import logging
+
+class BaseTradingAgent(BaseAgent):
+    """
+    Base class for trading agents that provides common trading functionality
+    """
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.capabilities.extend([
+            AgentCapability.TRADING,
+            AgentCapability.MARKET_DATA,
+            AgentCapability.ORDER_MANAGEMENT
+        ])
+        
+        # Trading state
+        self.positions: Dict[str, Decimal] = {}
+        self.orders: Dict[str, Order] = {}
+        self.balances: Dict[str, Decimal] = {}
+        
+        # Market data state
+        self.latest_prices: Dict[str, MarketData] = {}
+        
+    async def setup(self):
+        """Set up trading agent message handlers and initial state"""
+        # Register message handlers
+        self.register_handler(TradingMessageTypes.MARKET_DATA, self._handle_market_data)
+        self.register_handler(TradingMessageTypes.ORDER_UPDATE, self._handle_order_update)
+        self.register_handler(TradingMessageTypes.ORDER_FILL, self._handle_order_fill)
+        self.register_handler(TradingMessageTypes.BALANCE_UPDATE, self._handle_balance_update)
+        
+        # Initialize trading state
+        await self._initialize_trading_state()
+        
+    async def _initialize_trading_state(self):
+        """Initialize trading state - override in subclasses"""
+        pass
+        
+    async def _handle_market_data(self, message):
+        """Process incoming market data"""
+        try:
+            market_data = MarketData(**message.payload)
+            self.latest_prices[market_data.symbol] = market_data
+            await self.on_market_data(market_data)
+        except Exception as e:
+            self.logger.error(f"Error processing market data: {str(e)}")
+            
+    async def _handle_order_update(self, message):
+        """Process order status updates"""
+        try:
+            order = Order(**message.payload)
+            self.orders[order.order_id] = order
+            await self.on_order_update(order)
+        except Exception as e:
+            self.logger.error(f"Error processing order update: {str(e)}")
+            
+    async def _handle_order_fill(self, message):
+        """Process order fills"""
+        try:
+            order = Order(**message.payload)
+            self.orders[order.order_id] = order
+            
+            # Update position
+            if order.status == OrderStatus.FILLED:
+                symbol = order.symbol
+                fill_qty = order.filled_quantity
+                if order.side == "SELL":
+                    fill_qty = -fill_qty
+                    
+                self.positions[symbol] = self.positions.get(symbol, Decimal("0")) + fill_qty
+                
+            await self.on_order_fill(order)
+        except Exception as e:
+            self.logger.error(f"Error processing order fill: {str(e)}")
+            
+    async def _handle_balance_update(self, message):
+        """Process balance updates"""
+        try:
+            self.balances.update(message.payload)
+            await self.on_balance_update(self.balances)
+        except Exception as e:
+            self.logger.error(f"Error processing balance update: {str(e)}")
+            
+    # Trading Actions
+    async def place_order(self, order: Order):
+        """Place a new order"""
+        message = {"order": order}
+        await self.send_message("exchange", TradingMessageTypes.ORDER_NEW, message)
+        self.orders[order.order_id] = order
+        
+    async def cancel_order(self, order_id: str):
+        """Cancel an existing order"""
+        if order_id in self.orders:
+            message = {"order_id": order_id}
+            await self.send_message("exchange", TradingMessageTypes.ORDER_CANCEL, message)
+            
+    # Override these methods in strategy implementations
+    async def on_market_data(self, market_data: MarketData):
+        """Called when new market data is received"""
+        pass
+        
+    async def on_order_update(self, order: Order):
+        """Called when an order status is updated"""
+        pass
+        
+    async def on_order_fill(self, order: Order):
+        """Called when an order is filled"""
+        pass
+        
+    async def on_balance_update(self, balances: Dict[str, Decimal]):
+        """Called when balances are updated"""
+        pass

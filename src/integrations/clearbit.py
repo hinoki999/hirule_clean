@@ -2,11 +2,11 @@ from typing import Dict, Optional
 from .base import BaseAPIClient, APIConfig, APIError
 
 class ClearbitError(APIError):
-    """Clearbit specific API error"""
+    ###"""Clearbit specific API error###"""
     pass
 
 class ClearbitNotFoundError(ClearbitError):
-    """Raised when Clearbit cannot find data for the given input"""
+    ###"""Raised when Clearbit cannot find data for the given input###"""
     pass
 
 class ClearbitClient(BaseAPIClient):
@@ -21,7 +21,7 @@ class ClearbitClient(BaseAPIClient):
         super().__init__(config)
 
     async def _handle_response_error(self, response):
-        """Handle Clearbit-specific error responses"""
+        ###"""Handle Clearbit-specific error responses###"""
         if response.status == 402:
             raise ClearbitError("Query limit exceeded or payment required", status_code=402)
         elif response.status == 404:
@@ -31,17 +31,17 @@ class ClearbitClient(BaseAPIClient):
         await super()._handle_response_error(response)
 
     async def enrich_company(self, domain: str) -> Dict:
-        """
+        ###"""
         Enrich company data using Clearbit's Company API
-        
+
         Args:
             domain: Company domain name
-            
+
         Raises:
             ClearbitNotFoundError: When company data cannot be found
             ClearbitError: For Clearbit-specific errors
             APIError: For general API errors
-        """
+        ###"""
         try:
             return await self._request("GET", f"/companies/find?domain={domain}")
         except ClearbitError as e:
@@ -51,20 +51,22 @@ class ClearbitClient(BaseAPIClient):
             raise
 
     async def enrich_person(self, email: str) -> Dict:
-        """
+        ###"""
         Enrich person data using Clearbit's Person API
-        
+
         Args:
             email: Person's email address
-            
+
         Raises:
             ClearbitNotFoundError: When person data cannot be found
             ClearbitError: For Clearbit-specific errors
             APIError: For general API errors
-        """
+        ###"""
         try:
             return await self._request("GET", f"/people/find?email={email}")
         except ClearbitError as e:
             if isinstance(e, ClearbitNotFoundError):
                 raise ClearbitNotFoundError(f"No person data found for email: {email}")
             raise
+
+

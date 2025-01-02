@@ -1,4 +1,9 @@
 agents
+communication
+config
 core
+enrichment
+integrations
+metrics
 protocols
 semantic

@@ -1,0 +1,134 @@
+# test_smart_trading_thresholds.py
+
+import pytest
+from decimal import Decimal
+from src.agents.trading.tests.conftest import trading_agent
+from src.agents.trading.market_regime import MarketState
+from datetime import datetime
+
+@pytest.mark.asyncio
+async def test_position_sizing(trading_agent):
+    """Test position sizing based on market regime."""
+    symbol = "BTC/USD"
+    trade_size = Decimal("1000.0")
+    base_price = 50000.0
+
+    # Simulate enough market data to trigger regime detection
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": symbol,
+                "last_price": base_price,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+
+    # Calculate thresholds and sizing
+    threshold, size_mult = trading_agent.trading_thresholds.calculate_thresholds_and_sizing(symbol, trade_size, base_price)
+
+    # Since in the code, normal volatility regime multiplier is 0.7, assert it
+    assert size_mult == 0.7, f"Expected size_mult_normal_vol (0.7) to be {0.7}, got {size_mult}"
+
+    # Now, simulate high volatility
+    # Modify the regime_detector to set high volatility
+    trading_agent.trading_thresholds.regime_detector.detect_regime = lambda s: MarketState(
+        volatility_regime="high",
+        liquidity_state="good",
+        trend_strength=0.6,
+        mean_reversion_score=0.4
+    )
+
+    threshold_high_vol, size_mult_high_vol = trading_agent.trading_thresholds.calculate_thresholds_and_sizing(symbol, trade_size, base_price)
+
+    # For high volatility, size_mult should be <=0.7 (as per code, it's lower)
+    assert size_mult_high_vol < 0.7, f"Expected size_mult_high_vol to be less than 0.7, got {size_mult_high_vol}"
+
+@pytest.mark.asyncio
+async def test_threshold_adjustment(trading_agent):
+    """Test threshold adjustment based on market regime."""
+    symbol = "BTC/USD"
+    trade_size = Decimal("1000.0")
+    base_price = 50000.0
+
+    # Simulate enough market data to trigger regime detection
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": symbol,
+                "last_price": base_price,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+
+    # Calculate thresholds and sizing
+    threshold, size_mult = trading_agent.trading_thresholds.calculate_thresholds_and_sizing(symbol, trade_size, base_price)
+
+    # Check that threshold is as expected
+    expected_threshold = 0.0010558323628501356  # As per logs
+    assert threshold == expected_threshold, f"Expected threshold_normal_vol ({expected_threshold}) to be {expected_threshold}, got {threshold}"
+
+    # Now, simulate high volatility
+    trading_agent.trading_thresholds.regime_detector.detect_regime = lambda s: MarketState(
+        volatility_regime="high",
+        liquidity_state="good",
+        trend_strength=0.6,
+        mean_reversion_score=0.4
+    )
+
+    threshold_high_vol, size_mult_high_vol = trading_agent.trading_thresholds.calculate_thresholds_and_sizing(symbol, trade_size, base_price)
+
+    # Check that threshold_high_vol is greater than normal
+    assert threshold_high_vol > expected_threshold, f"Expected threshold_high_vol ({threshold_high_vol}) to be greater than threshold_normal_vol ({expected_threshold})"
+
+@pytest.mark.asyncio
+async def test_system_health(trading_agent):
+    """Test system health metrics."""
+    symbol = "BTC/USD"
+
+    # Simulate market data
+    for _ in range(25):
+        await trading_agent.process_message({
+            "type": "MARKET_DATA",
+            "payload": {
+                "symbol": symbol,
+                "last_price": 50000.0,
+                "volume": 1000.0,
+                "cost": 0.001,
+                "timestamp": datetime.now()
+            }
+        })
+
+    health = await trading_agent.get_system_health(symbol)
+    assert health["health_status"] == "Good", "Health status should be 'Good'."
+    assert health["circuit_breaker_active"] == False, "Circuit breaker should be inactive."
+    assert health["regime_confidence"] == 0.5, "Regime confidence should be 0.5."
+
+    # Simulate high market stress
+    trading_agent.trading_thresholds.regime_detector.detect_regime = lambda s: MarketState(
+        volatility_regime="high",
+        liquidity_state="good",
+        trend_strength=0.6,
+        mean_reversion_score=0.4
+    )
+
+    await trading_agent.process_message({
+        "type": "MARKET_DATA",
+        "payload": {
+            "symbol": symbol,
+            "last_price": 51000.0,
+            "volume": 2000.0,
+            "cost": 0.002,
+            "timestamp": datetime.now()
+        }
+    })
+
+    health = await trading_agent.get_system_health(symbol)
+    assert health["health_status"] == "Alert", "Health status should be 'Alert' under high market stress."
+    assert health["circuit_breaker_active"] == True, "Circuit breaker should be active under high market stress."
+    assert health["regime_confidence"] == 0.9, "Regime confidence should be 0.9 under high market stress."
