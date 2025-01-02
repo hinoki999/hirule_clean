@@ -1,17 +1,4 @@
-<<<<<<< ours
-﻿from typing import Dict, Any
-
-class BaseAgent:
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
-        self.message_bus = None
-        self.capabilities = []
-    
-    async def setup(self):
-        pass
-||||||| base
-=======
-from abc import ABC, abstractmethod
+﻿from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Callable
 import asyncio
 import uuid
@@ -34,4 +21,12 @@ class AgentCapability(Enum):
     MARKET_DATA = auto()       # For market data handling
     ORDER_MANAGEMENT = auto()  # For order execution
     RISK_MANAGEMENT = auto()   # For risk calculations
->>>>>>> theirs
+
+class BaseAgent:
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.message_bus = None
+        self.capabilities = []
+    
+    async def setup(self):
+        pass
