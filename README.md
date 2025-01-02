@@ -1,4 +1,4 @@
-# Hyrule Trading System
+# Hirule Trading System
 
 A comprehensive trading system with memory integration, risk management, and performance analytics.
 
