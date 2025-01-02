@@ -1,0 +1,42 @@
+{
+    "initial_capital": 100000.0,
+    "max_position_size": 10000.0,
+    "max_leverage": 2.0,
+    "trading_hours": {
+        "default": {
+            "start": "09:30",
+            "end": "16:00"
+        },
+        "crypto": {
+            "start": "00:00",
+            "end": "23:59"
+        }
+    },
+    "allowed_markets": ["US_STOCKS", "CRYPTO"],
+    
+    "risk_limits": {
+        "daily_loss": 1000.0,
+        "max_position_value": 20000.0,
+        "max_single_order": 5000.0
+    },
+    "max_drawdown": 0.1,
+    "var_limit": 0.02,
+    "position_limits": {
+        "default": 5000.0,
+        "AAPL": 10000.0,
+        "BTC": 15000.0
+    },
+    
+    "performance_metrics_lookback": 30,
+    "benchmark_index": "SPY",
+    "risk_free_rate": 0.02,
+    
+    "log_dir": "logs",
+    "log_level": "INFO",
+    "retention_days": 30,
+    "max_cache_size": 1000,
+    
+    "memory_retention_period": 90,
+    "max_memories": 10000,
+    "memory_importance_threshold": 0.5
+}
