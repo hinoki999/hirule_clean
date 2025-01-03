@@ -1,12 +1,20 @@
-from setuptools import setup, find_packages
+﻿from setuptools import setup, find_packages
 
 setup(
-    name="trading_system",
+    name="hirule",
     version="0.1",
-    packages=find_packages(),
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
+    python_requires=">=3.8",
     install_requires=[
+        # Core dependencies
         "numpy",
         "pytest",
-        "pytest-asyncio"
+        "pytest-asyncio",
+        
+        # External integrations
+        'hirule-clean-market-data @ git+https://github.com/hinoki999/hirule_clean_market_data.git',
+        'trading-system @ git+https://github.com/hinoki999/trading-system.git',
+        'eliza @ git+https://github.com/elizaOS/eliza.git'
     ]
 )

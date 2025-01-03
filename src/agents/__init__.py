@@ -1,31 +1,19 @@
-<<<<<<< ours
+"""
+Agents module initialization
+"""
 
-||||||| base
-=======
-"""
-Hirule Agents Package
-Contains all agent-related implementations for the Hirule system.
-"""
-from src.agents.base import BaseAgent
-from src.agents.capability import CapabilityRegistry, Capability
-from src.agents.task_management import TaskTracker, Task, TaskStatus, TaskPriority
-from src.agents.protocol_agent import ProtocolAgent
-from src.agents.blockchain_agent import BlockchainAgent
-from src.agents.handlers import TaskAgentHandler, ProtocolAgentHandler
-from src.agents.master_coordinator import MasterCoordinator  # Added this import
+from .base import BaseAgent
+from .capability import Capability
+from .coordinator import Coordinator
+from .marketplace_agent import MarketplaceAgent
+from .protocol_agent import ProtocolAgent
+from .semantic_agent import SemanticAgent
 
 __all__ = [
-    "BaseAgent",
-    "CapabilityRegistry",
-    "Capability", 
-    "MasterCoordinator",
-    "TaskTracker",
-    "Task",
-    "TaskStatus",
-    "TaskPriority",
-    "ProtocolAgent",
-    "BlockchainAgent",
-    "TaskAgentHandler",
-    "ProtocolAgentHandler",
+    'BaseAgent',
+    'Capability',
+    'Coordinator',
+    'MarketplaceAgent',
+    'ProtocolAgent',
+    'SemanticAgent'
 ]
->>>>>>> theirs

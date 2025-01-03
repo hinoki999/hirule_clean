@@ -1,9 +1,7 @@
 """
-Core functionality for the Hirule system.
+Core module initialization
 """
+from .memory_system import MemorySystem
+from .message_bus import MessageBus
 
-from core.config import Config  # Changed from .config
-from core.messaging import MessageBus  # Changed from .messaging
-from core.utils import setup_logging  # Changed from .utils
-
-__all__ = ['Config', 'MessageBus', 'setup_logging']
+__all__ = ['MemorySystem', 'MessageBus']
